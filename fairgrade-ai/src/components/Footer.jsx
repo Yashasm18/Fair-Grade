@@ -28,7 +28,7 @@ const Footer = () => {
           <span>Google Solution Challenge 2026</span>
           <span className="footer-divider">·</span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-            Made with <Heart size={12} color="#ec4899" fill="#ec4899" /> by Team FairGrade
+            Made with <Heart size={12} color="#ec4899" fill="#ec4899" /> by Team VEKTOR ⚡
           </span>
         </div>
       </div>

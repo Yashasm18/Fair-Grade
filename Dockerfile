@@ -19,8 +19,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy backend application
 COPY app.py .
-COPY data_generator.py .
-COPY gemini_service.py .
 
 # Expose port (Cloud Run uses 8080 by default)
 EXPOSE 8080

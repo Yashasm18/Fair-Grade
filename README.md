@@ -4,6 +4,15 @@
 
 FairGrade AI is an intelligent, multi-agent evaluation platform built for the **Google Solution Challenge 2026**. It ensures fair, unbiased evaluation of student answer sheets by extracting handwriting via multimodal AI, stripping identity markers to prevent implicit bias, and comparing human teacher grades against an objective AI baseline.
 
+## 🚀 Live Demo & Links
+
+| Resource | Link |
+|----------|------|
+| 🌐 **Live Website** | [FairGrade AI on Vercel](https://project-xq9vm.vercel.app/) |
+| ⚙️ **Backend API** | [FairGrade Backend on Render](https://fairgrade-backend.onrender.com) |
+| 📂 **Source Code** | You're here! |
+
+
 ## ✨ Key Features
 - **Multimodal OCR (Gemini 2.5 Flash):** Automatically extracts handwriting directly from uploaded images and PDFs. 
 - **Universal Problem Solver:** Provide any custom question and rubric. The AI reads the student's answer and evaluates it strictly based on factual correctness.
@@ -34,14 +43,14 @@ graph TD
         C[API Endpoint /api/evaluate]:::backend
         
         subgraph "AI Agent Pipeline"
-            D[👁️ OCR Agent <br> Extracts Handwriting via Gemini Vision]:::agents
-            E[🛡️ Privacy Agent <br> Strips Names/IDs to Anonymize]:::agents
-            F[🧠 Evaluation Agent <br> Deterministic Grading via Gemini 2.5]:::agents
-            G[⚖️ Bias Agent <br> Calculates AI vs Human Bias]:::agents
+            D["OCR Agent - Extracts Handwriting via Gemini Vision"]:::agents
+            E["Privacy Agent - Strips Names/IDs to Anonymize"]:::agents
+            F["Evaluation Agent - Deterministic Grading via Gemini 2.5"]:::agents
+            G["Bias Agent - Calculates AI vs Human Bias"]:::agents
         end
     end
 
-    H[(Firestore Database <br> Saves Metrics & Anonymized Data)]:::database
+    H[("Firestore Database - Saves Metrics & Anonymized Data")]:::database
 
     %% Connections
     A -- "POST /api/evaluate" --> C
@@ -68,7 +77,7 @@ graph TD
 
 ### 1. Backend (Python/FastAPI)
 
-The backend handles the core Antigravity multi-agent system.
+The backend handles the core FairGrade AI multi-agent system.
 
 1. Install the Python dependencies:
    ```bash
@@ -113,4 +122,7 @@ The backend handles the core Antigravity multi-agent system.
 - **Frontend:** Can be deployed to **Vercel** or **Firebase Hosting**. Make sure to update `VITE_API_URL` to point to your live backend URL before deploying.
 
 ---
-*Built for the Google Solution Challenge 2026*
+
+## 👥 Team VEKTOR ⚡
+
+*Built with ❤️ for the Google Solution Challenge 2026*
