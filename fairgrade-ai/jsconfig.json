@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "ESNext",
+    "jsx": "react"
+  },
+  "include": ["src/**/*", "vite.config.js", "eslint.config.js"],
+  "exclude": ["node_modules", "dist"]
+}
