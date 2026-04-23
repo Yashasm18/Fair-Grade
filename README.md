@@ -66,7 +66,7 @@ This project directly addresses **[SDG 4: Quality Education](https://sdgs.un.org
 
 | Upload & Evaluate | Bias Analysis | Analytics Dashboard |
 |:-----------------:|:-------------:|:-------------------:|
-| ![Upload screen](./fairgrade-ai/src/assets/hero.png) | ![Bias result](./fairgrade-ai/src/assets/hero.png) | ![Analytics](./fairgrade-ai/src/assets/hero.png) |
+| ![Upload & Evaluate](./fairgrade-ai/src/assets/screenshot_upload.png) | ![Bias Analysis](./fairgrade-ai/src/assets/screenshot_bias.png) | ![Analytics Dashboard](./fairgrade-ai/src/assets/screenshot_analytics.png) |
 
 > *Visit the [live demo](https://team-vektor-fairgrade.vercel.app/) to see the full flow in action.*
 
