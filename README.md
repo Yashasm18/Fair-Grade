@@ -1,6 +1,6 @@
 # 🏆 FairGrade AI — Bias Detection in Student Grading
 
-![FairGrade AI](https://raw.githubusercontent.com/Yashasm18/Fair-Grade/main/fairgrade-ai/src/assets/hero.png)
+![FairGrade AI](./fairgrade-ai/src/assets/hero.png)
 
 FairGrade AI is an intelligent, multi-agent evaluation platform built for the **Google Solution Challenge 2026**. It ensures fair, unbiased evaluation of student answer sheets by extracting handwriting via multimodal AI, stripping identity markers to prevent implicit bias, and comparing human teacher grades against an objective AI baseline.
 
