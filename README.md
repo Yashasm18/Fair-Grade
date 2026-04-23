@@ -2,127 +2,183 @@
 
 ![FairGrade AI](./fairgrade-ai/src/assets/hero.png)
 
-FairGrade AI is an intelligent, multi-agent evaluation platform built for the **Google Solution Challenge 2026**. It ensures fair, unbiased evaluation of student answer sheets by extracting handwriting via multimodal AI, stripping identity markers to prevent implicit bias, and comparing human teacher grades against an objective AI baseline.
+<p align="center">
+  <img src="https://img.shields.io/badge/Google%20Solution%20Challenge-2026-4285F4?style=for-the-badge&logo=google&logoColor=white" />
+  <img src="https://img.shields.io/badge/SDG%204-Quality%20Education-c5192d?style=for-the-badge&logo=unitednations&logoColor=white" />
+  <img src="https://img.shields.io/badge/Built%20with-Gemini%20AI-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white" />
+  <img src="https://img.shields.io/badge/Status-Live-34d399?style=for-the-badge" />
+</p>
 
-## 🚀 Live Demo & Links
+<p align="center">
+  <b>An intelligent, multi-agent evaluation platform that detects and mitigates systemic bias in student grading.</b>
+</p>
 
-| Resource | Link |
-|----------|------|
-| 🌐 **Live Website** | [FairGrade AI on Vercel](https://project-xq9vm.vercel.app/) |
-| ⚙️ **Backend API** | [FairGrade Backend on Render](https://fairgrade-backend.onrender.com) |
-| 📂 **Source Code** | You're here! |
-
-
-## ✨ Key Features
-- **Multimodal OCR (Gemini 2.5 Flash):** Automatically extracts handwriting directly from uploaded images and PDFs. 
-- **Universal Problem Solver:** Provide any custom question and rubric. The AI reads the student's answer and evaluates it strictly based on factual correctness.
-- **Privacy Engine:** Automatically redacts names, Student IDs, and Roll Numbers to create an "Anonymized Trajectory" before grading occurs.
-- **Bias Detection & Analytics:** Flags evaluations as *Undergraded*, *Overgraded*, or *Fair*. All data is aggregated into an interactive dashboard to spot systemic grading bias across classrooms.
-- **Fault-Tolerant AI Pipeline:** Built-in automatic fallback mechanisms across multiple Gemini models (`gemini-2.5-flash`, `gemini-2.0-flash-lite`, etc.) to bypass rate limits and ensure 100% uptime.
+<p align="center">
+  👉 <a href="https://project-xq9vm.vercel.app/"><b>Try the Live Demo</b></a>
+</p>
 
 ---
 
-## 🏗️ System Architecture & Workflow
+## 📌 The Problem
 
-FairGrade AI uses a highly secure Client-Server architecture. To protect privacy, images are processed securely in memory by the backend and immediately destroyed.
+> Research shows that **implicit bias** in grading affects millions of students worldwide. Factors such as a student's name, gender, or handwriting style can unconsciously influence a teacher's score — even among well-intentioned educators.
+
+Students from marginalized communities are disproportionately affected. The current system offers **no objective way** for schools to detect or measure this bias at scale.
+
+**FairGrade AI solves this** by providing an independent, AI-powered "second opinion" on every graded paper — completely anonymized and bias-free.
+
+---
+
+## 🎯 UN Sustainable Development Goal
+
+This project directly addresses **[SDG 4: Quality Education](https://sdgs.un.org/goals/goal4)** — ensuring inclusive and equitable quality education for all.
+
+| Target | How FairGrade Helps |
+|--------|-------------------|
+| **4.1** Ensure all learners achieve literacy and numeracy | Provides objective evaluation regardless of student background |
+| **4.5** Eliminate gender disparities in education | Strips identity markers before grading to prevent gender bias |
+| **4.a** Build effective, inclusive learning environments | Gives schools a data dashboard to detect and fix systemic grading patterns |
+
+---
+
+## ✨ Key Features
+
+| Feature | Description |
+|---------|-------------|
+| 👁️ **Multimodal OCR** | Extracts handwriting from images and PDFs using Gemini 2.5 Flash Vision |
+| 🛡️ **Privacy Engine** | Automatically redacts Names, Student IDs, and Roll Numbers before grading |
+| 🧠 **AI Evaluation** | Grades answers based purely on factual correctness against a rubric |
+| ⚖️ **Bias Detection** | Compares AI score vs. Teacher score and flags *Undergraded*, *Overgraded*, or *Fair* |
+| 📊 **Analytics Dashboard** | Aggregates all results into interactive charts to spot systemic classroom bias |
+| 🔄 **Fault-Tolerant Pipeline** | Auto-fallback across multiple Gemini models to ensure 100% uptime |
+
+---
+
+## 🏗️ System Architecture
+
+FairGrade AI uses a **4-agent pipeline** where each agent has a single responsibility. Images are processed **in-memory** and never stored on disk to protect student privacy.
 
 ```mermaid
 graph TD
-    %% Styling
     classDef frontend fill:#3b82f6,stroke:#1d4ed8,stroke-width:2px,color:#fff;
     classDef backend fill:#10b981,stroke:#047857,stroke-width:2px,color:#fff;
     classDef agents fill:#f59e0b,stroke:#b45309,stroke-width:2px,color:#fff;
     classDef database fill:#ec4899,stroke:#be185d,stroke-width:2px,color:#fff;
 
-    subgraph "React Frontend (Client)"
-        A[Teacher uploads Answer Sheet & Rubric]:::frontend
-        B[Analytics Dashboard & UI]:::frontend
+    subgraph "React Frontend"
+        A["Teacher uploads Answer Sheet + Rubric"]:::frontend
+        B["Analytics Dashboard"]:::frontend
     end
 
-    subgraph "Python FastAPI (Server)"
-        C[API Endpoint /api/evaluate]:::backend
-        
+    subgraph "FastAPI Backend"
+        C["API Gateway"]:::backend
+
         subgraph "AI Agent Pipeline"
-            D["OCR Agent - Extracts Handwriting via Gemini Vision"]:::agents
-            E["Privacy Agent - Strips Names/IDs to Anonymize"]:::agents
-            F["Evaluation Agent - Deterministic Grading via Gemini 2.5"]:::agents
-            G["Bias Agent - Calculates AI vs Human Bias"]:::agents
+            D["1. OCR Agent"]:::agents
+            E["2. Privacy Agent"]:::agents
+            F["3. Evaluation Agent"]:::agents
+            G["4. Bias Agent"]:::agents
         end
     end
 
-    H[("Firestore Database - Saves Metrics & Anonymized Data")]:::database
+    H[("Firebase Firestore")]:::database
 
-    %% Connections
     A -- "POST /api/evaluate" --> C
     C --> D
     D -- "Raw Text" --> E
     E -- "Anonymized Text" --> F
-    F -- "AI Score & Reasoning" --> G
-    G -- "Evaluation Report" --> C
+    F -- "AI Score + Reasoning" --> G
+    G -- "Final Report" --> C
     C -- "JSON Response" --> B
-    B -- "Saves Report" --> H
+    B -- "Saves Metrics" --> H
 ```
+
+---
 
 ## 🛠️ Tech Stack
 
-*   **Frontend:** React, Vite, Tailwind CSS, Recharts
-*   **Backend:** Python, FastAPI, Uvicorn
-*   **AI Models:** Google Gemini 2.5 Flash, Gemini 2.0 Flash Lite (with Fallback Engine)
-*   **Database:** Firebase Firestore
-*   **Deployment:** Render / Vercel
+<p align="center">
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
+  <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
+  <img src="https://img.shields.io/badge/Gemini%20AI-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white" />
+  <img src="https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" />
+  <img src="https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=black" />
+  <img src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" />
+</p>
+
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | React, Vite, CSS3 (Glassmorphism), Recharts |
+| **Backend** | Python, FastAPI, Uvicorn |
+| **AI Engine** | Google Gemini 2.5 Flash, Gemini 2.0 Flash Lite (with automatic fallback) |
+| **Database** | Firebase Firestore (real-time) |
+| **Deployment** | Vercel (Frontend) + Render (Backend) |
 
 ---
 
-## 🚀 Local Setup Instructions
+## 🚀 Getting Started (Local Development)
 
-### 1. Backend (Python/FastAPI)
+### Prerequisites
+- Python 3.10+
+- Node.js 18+
+- A [Google Gemini API Key](https://aistudio.google.com/app/apikey)
 
-The backend handles the core FairGrade AI multi-agent system.
+### 1. Backend
 
-1. Install the Python dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-2. Create a `.env` file in the root directory and add your API key:
-   ```env
-   GEMINI_API_KEY=your_gemini_api_key_here
-   ```
-3. Start the server:
-   ```bash
-   uvicorn app:app --reload --port 8000
-   ```
+```bash
+# Install dependencies
+pip install -r requirements.txt
 
-### 2. Frontend (React/Vite)
+# Create .env file
+echo "GEMINI_API_KEY=your_key_here" > .env
 
-1. Open a new terminal and navigate to the frontend directory:
-   ```bash
-   cd fairgrade-ai
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Create a `.env` file in the `fairgrade-ai` folder with your backend URL and Firebase config:
-   ```env
-   VITE_API_URL=http://localhost:8000
-   VITE_FIREBASE_API_KEY=your_firebase_key
-   VITE_FIREBASE_PROJECT_ID=your_project_id
-   # ...other firebase config
-   ```
-4. Start the Vite server:
-   ```bash
-   npm run dev
-   ```
+# Start the server
+uvicorn app:app --reload --port 8000
+```
+
+### 2. Frontend
+
+```bash
+cd fairgrade-ai
+
+# Install dependencies
+npm install
+
+# Create .env with your Firebase config
+cp .env.example .env
+
+# Start the dev server
+npm run dev
+```
+
+The app will be available at `http://localhost:5173`
 
 ---
 
-## ☁️ Deployment
+## 📂 Project Structure
 
-- **Backend:** Can be deployed as a Web Service on **Render.com** or **Google Cloud Run**. (Use the provided `requirements.txt`).
-- **Frontend:** Can be deployed to **Vercel** or **Firebase Hosting**. Make sure to update `VITE_API_URL` to point to your live backend URL before deploying.
+```
+Fair-Grade/
+├── app.py                  # FastAPI backend (all 4 AI agents)
+├── requirements.txt        # Python dependencies
+├── Dockerfile              # Container deployment config
+├── README.md
+└── fairgrade-ai/           # React frontend
+    ├── src/
+    │   ├── App.jsx         # Main application
+    │   ├── Analytics.jsx   # Bias analytics dashboard
+    │   ├── components/     # Reusable UI components
+    │   └── config/         # Firebase configuration
+    ├── package.json
+    └── vite.config.js
+```
 
 ---
 
 ## 👥 Team VEKTOR ⚡
 
-*Built with ❤️ for the Google Solution Challenge 2026*
+<p align="center">
+  <i>Built with ❤️ for the Google Solution Challenge 2026</i>
+</p>
