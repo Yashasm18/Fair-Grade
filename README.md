@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  👉 <a href="https://project-xq9vm.vercel.app/"><b>Try the Live Demo</b></a>
+  👉 <a href="https://team-vektor-fairgrade.vercel.app/"><b>Try the Live Demo</b></a>
 </p>
 
 ---
