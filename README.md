@@ -74,7 +74,7 @@ This project directly addresses **[SDG 4: Quality Education](https://sdgs.un.org
 
 ## 🏗️ System Architecture
 
-FairGrade AI uses a **5-agent pipeline** where each agent has a single responsibility. Images are processed **in-memory** and never stored on disk to protect student privacy.
+FairGrade AI uses a **4-agent pipeline** where each agent has a single responsibility. Images are processed **in-memory** and never stored on disk to protect student privacy.
 
 ```mermaid
 graph TD
@@ -83,36 +83,28 @@ graph TD
     classDef agents fill:#f59e0b,stroke:#b45309,stroke-width:2px,color:#fff;
     classDef database fill:#ec4899,stroke:#be185d,stroke-width:2px,color:#fff;
 
-    subgraph "React Frontend"
-        A["Teacher uploads Answer Sheet + Rubric"]:::frontend
-        B["Analytics Dashboard"]:::frontend
+    A["Teacher uploads Answer Sheet + Rubric"]:::frontend
+    B["Analytics Dashboard"]:::frontend
+    C["API Gateway"]:::backend
+
+    subgraph "AI Agent Pipeline"
+        D["1. OCR Agent"]:::agents
+        E["2. Privacy Agent"]:::agents
+        F["3. Evaluation Agent"]:::agents
+        G["4. Bias Agent"]:::agents
     end
 
-    subgraph "FastAPI Backend"
-        C["API Gateway"]:::backend
+    H[("Firebase Firestore")]:::database
 
-        subgraph "AI Agent Pipeline"
-            D["1. OCR Agent"]:::agents
-            E["2. Privacy Agent"]:::agents
-            F["3. Evaluation Agent"]:::agents
-            G["4. Bias Agent"]:::agents
-            H["5. Reporting Agent"]:::agents
-        end
-    end
-
-    I[("Firebase Firestore")]:::database
-
-    A -- "POST /api/evaluate" --> C
+    A -->|"POST /api/evaluate"| C
     C --> D
-    D -- "Raw Text" --> E
-    E -- "Anonymized Text" --> F
-    F -- "AI Score + Reasoning" --> G
-    G -- "Bias Classification" --> H
-    H -- "Final Report JSON" --> C
-    C -- "JSON Response" --> B
-    B -- "Saves Metrics" --> I
+    D -->|"Raw Text"| E
+    E -->|"Anonymized Text"| F
+    F -->|"AI Score + Reasoning"| G
+    G -->|"Final Report"| C
+    C -->|"JSON Response"| B
+    B -->|"Saves Metrics"| H
 ```
-
 ---
 
 ## 🛠️ Tech Stack
@@ -195,33 +187,36 @@ pytest tests/ -v
 
 ## 📂 Project Structure
 
-```
+```text
 Fair-Grade/
-├── app.py                      # FastAPI entry point (orchestrates agents)
-├── agents/                     # 5-agent pipeline (one responsibility each)
-│   ├── __init__.py
-│   ├── ocr_agent.py            # Agent 1 — Gemini Vision OCR
-│   ├── privacy_agent.py        # Agent 2 — Identity redaction
-│   ├── evaluation_agent.py     # Agent 3 — AI grading with model fallback
-│   ├── bias_agent.py           # Agent 4 — Bias classification
-│   └── reporting_agent.py      # Agent 5 — Final report assembly
-├── tests/
-│   └── test_agents.py          # Unit tests (Privacy, Bias, Reporting agents)
-├── requirements.txt            # Python dependencies
-├── Dockerfile                  # Container deployment config
-├── .env.example                # Environment variable template
-├── .github/workflows/ci.yml    # GitHub Actions CI pipeline
-├── CONTRIBUTING.md
-├── LICENSE
-└── fairgrade-ai/               # React frontend
-    ├── src/
-    │   ├── App.jsx             # Main application
-    │   ├── Analytics.jsx       # Bias analytics dashboard
-    │   ├── components/         # Reusable UI components
-    │   └── config/             # Firebase configuration
-    ├── .env.example
-    ├── package.json
-    └── vite.config.js
+│
+├── 🐍 Backend (Python / FastAPI)
+│   ├── app.py                      # API Gateway & Route Handlers
+│   ├── requirements.txt            # Python dependencies
+│   ├── agents/                     # AI Pipeline
+│   │   ├── ocr_agent.py            # Extracts text from images
+│   │   ├── privacy_agent.py        # Redacts student identities
+│   │   ├── evaluation_agent.py     # Grades answers via Gemini
+│   │   └── bias_agent.py           # Calculates bias & outputs report
+│   └── tests/
+│       └── test_agents.py          # Unit tests for the AI agents
+│
+├── ⚛️ Frontend (React / Vite)
+│   └── fairgrade-ai/
+│       ├── package.json            # Node dependencies
+│       ├── vite.config.js          # Vite build configuration
+│       └── src/
+│           ├── App.jsx             # Main Application Logic
+│           ├── Analytics.jsx       # Bias Visualization Dashboard
+│           ├── components/         # Reusable UI Elements
+│           └── config/             # Firebase configuration
+│
+└── ⚙️ Config & Deployment
+    ├── Dockerfile                  # Container instructions for Render
+    ├── .env.example                # Template for environment variables
+    ├── .github/workflows/ci.yml    # Automated testing & build pipeline
+    ├── CONTRIBUTING.md             # Guidelines for open-source contributors
+    └── LICENSE                     # MIT License
 ```
 
 ---
