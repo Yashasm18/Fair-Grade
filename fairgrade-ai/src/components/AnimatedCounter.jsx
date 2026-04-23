@@ -11,7 +11,6 @@ const AnimatedCounter = ({ end, duration = 1200, decimals = 1, prefix = '', suff
 
   useEffect(() => {
     const target = parseFloat(end) || 0;
-    if (target === 0) { setValue(0); return; }
 
     const animate = (timestamp) => {
       if (!startTime.current) startTime.current = timestamp;

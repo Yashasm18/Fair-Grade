@@ -332,7 +332,6 @@ function App() {
   };
 
   const displayResults = demoMode ? DEMO_RESULTS : results;
-  const displayFileCount = demoMode ? DEMO_RESULTS.length : files.length;
 
   return (
     <div className="app-container">
