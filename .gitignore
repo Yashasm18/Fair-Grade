@@ -1,9 +1,12 @@
 .venv/
 __pycache__/
+**/__pycache__/
 *.pyc
+*.pyo
 .env
 .DS_Store
 fairgrade-ai/node_modules/
 fairgrade-ai/dist/
 fairgrade-ai/.env
 vision-key.json
+.pytest_cache/

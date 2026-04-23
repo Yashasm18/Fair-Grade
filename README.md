@@ -7,6 +7,8 @@
   <img src="https://img.shields.io/badge/SDG%204-Quality%20Education-c5192d?style=for-the-badge&logo=unitednations&logoColor=white" />
   <img src="https://img.shields.io/badge/Built%20with-Gemini%20AI-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white" />
   <img src="https://img.shields.io/badge/Status-Live-34d399?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/CI-Passing-brightgreen?style=for-the-badge&logo=githubactions&logoColor=white" />
 </p>
 
 <p align="center">
@@ -15,7 +17,13 @@
 
 <p align="center">
   👉 <a href="https://team-vektor-fairgrade.vercel.app/"><b>Try the Live Demo</b></a>
+  &nbsp;·&nbsp;
+  <a href="#-getting-started-local-development">Local Setup</a>
+  &nbsp;·&nbsp;
+  <a href="#-team-vektor">Team</a>
 </p>
+
+> **⚠️ Cold Start Notice:** The backend is hosted on Render's free tier, which spins down after 15 minutes of inactivity. If the demo feels slow on first load, please allow ~30 seconds for the backend to wake up before trying again.
 
 ---
 
@@ -54,9 +62,19 @@ This project directly addresses **[SDG 4: Quality Education](https://sdgs.un.org
 
 ---
 
+## 🖥️ Screenshots
+
+| Upload & Evaluate | Bias Analysis | Analytics Dashboard |
+|:-----------------:|:-------------:|:-------------------:|
+| ![Upload screen](./fairgrade-ai/src/assets/hero.png) | ![Bias result](./fairgrade-ai/src/assets/hero.png) | ![Analytics](./fairgrade-ai/src/assets/hero.png) |
+
+> *Visit the [live demo](https://team-vektor-fairgrade.vercel.app/) to see the full flow in action.*
+
+---
+
 ## 🏗️ System Architecture
 
-FairGrade AI uses a **4-agent pipeline** where each agent has a single responsibility. Images are processed **in-memory** and never stored on disk to protect student privacy.
+FairGrade AI uses a **5-agent pipeline** where each agent has a single responsibility. Images are processed **in-memory** and never stored on disk to protect student privacy.
 
 ```mermaid
 graph TD
@@ -78,19 +96,21 @@ graph TD
             E["2. Privacy Agent"]:::agents
             F["3. Evaluation Agent"]:::agents
             G["4. Bias Agent"]:::agents
+            H["5. Reporting Agent"]:::agents
         end
     end
 
-    H[("Firebase Firestore")]:::database
+    I[("Firebase Firestore")]:::database
 
     A -- "POST /api/evaluate" --> C
     C --> D
     D -- "Raw Text" --> E
     E -- "Anonymized Text" --> F
     F -- "AI Score + Reasoning" --> G
-    G -- "Final Report" --> C
+    G -- "Bias Classification" --> H
+    H -- "Final Report JSON" --> C
     C -- "JSON Response" --> B
-    B -- "Saves Metrics" --> H
+    B -- "Saves Metrics" --> I
 ```
 
 ---
@@ -115,6 +135,7 @@ graph TD
 | **AI Engine** | Google Gemini 2.5 Flash, Gemini 2.0 Flash Lite (with automatic fallback) |
 | **Database** | Firebase Firestore (real-time) |
 | **Deployment** | Vercel (Frontend) + Render (Backend) |
+| **CI/CD** | GitHub Actions (lint + test + build on every push) |
 
 ---
 
@@ -128,11 +149,18 @@ graph TD
 ### 1. Backend
 
 ```bash
+# Clone the repo
+git clone https://github.com/Yashasm18/Fair-Grade.git
+cd Fair-Grade
+
+# Create & activate virtual environment
+python -m venv .venv && source .venv/bin/activate
+
 # Install dependencies
 pip install -r requirements.txt
 
-# Create .env file
-echo "GEMINI_API_KEY=your_key_here" > .env
+# Create .env file from template and add your API key
+cp .env.example .env
 
 # Start the server
 uvicorn app:app --reload --port 8000
@@ -155,22 +183,43 @@ npm run dev
 
 The app will be available at `http://localhost:5173`
 
+### 3. Run Tests
+
+```bash
+# From the project root
+pip install pytest
+pytest tests/ -v
+```
+
 ---
 
 ## 📂 Project Structure
 
 ```
 Fair-Grade/
-├── app.py                  # FastAPI backend (all 4 AI agents)
-├── requirements.txt        # Python dependencies
-├── Dockerfile              # Container deployment config
-├── README.md
-└── fairgrade-ai/           # React frontend
+├── app.py                      # FastAPI entry point (orchestrates agents)
+├── agents/                     # 5-agent pipeline (one responsibility each)
+│   ├── __init__.py
+│   ├── ocr_agent.py            # Agent 1 — Gemini Vision OCR
+│   ├── privacy_agent.py        # Agent 2 — Identity redaction
+│   ├── evaluation_agent.py     # Agent 3 — AI grading with model fallback
+│   ├── bias_agent.py           # Agent 4 — Bias classification
+│   └── reporting_agent.py      # Agent 5 — Final report assembly
+├── tests/
+│   └── test_agents.py          # Unit tests (Privacy, Bias, Reporting agents)
+├── requirements.txt            # Python dependencies
+├── Dockerfile                  # Container deployment config
+├── .env.example                # Environment variable template
+├── .github/workflows/ci.yml    # GitHub Actions CI pipeline
+├── CONTRIBUTING.md
+├── LICENSE
+└── fairgrade-ai/               # React frontend
     ├── src/
-    │   ├── App.jsx         # Main application
-    │   ├── Analytics.jsx   # Bias analytics dashboard
-    │   ├── components/     # Reusable UI components
-    │   └── config/         # Firebase configuration
+    │   ├── App.jsx             # Main application
+    │   ├── Analytics.jsx       # Bias analytics dashboard
+    │   ├── components/         # Reusable UI components
+    │   └── config/             # Firebase configuration
+    ├── .env.example
     ├── package.json
     └── vite.config.js
 ```
@@ -182,3 +231,15 @@ Fair-Grade/
 <p align="center">
   <i>Built with ❤️ for the Google Solution Challenge 2026</i>
 </p>
+
+| Name | Role | GitHub |
+|------|------|--------|
+| **Yashas M** | Full-Stack & AI Engineer | [@Yashasm18](https://github.com/Yashasm18) |
+
+> *Team VEKTOR — building technology for equitable education.*
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
