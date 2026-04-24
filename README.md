@@ -136,7 +136,7 @@ graph TD
     B["Analytics Dashboard"]:::frontend
     C["API Gateway (FastAPI)"]:::backend
 
-    subgraph "AI Agent Pipeline (Google Gemini)"
+    subgraph pipeline ["AI Agent Pipeline (Google Gemini)"]
         D["1. OCR Agent (Gemini Vision)"]:::agents
         E["2. Privacy Agent (PII Redaction)"]:::agents
         F["3. Evaluation Agent (Gemini AI)"]:::agents
