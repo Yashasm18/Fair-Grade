@@ -1,6 +1,6 @@
 # 🏆 FairGrade AI — Bias Detection in Student Grading
 
-![FairGrade AI](./fairgrade-ai/src/assets/hero.png)
+![FairGrade AI](./fairgrade-ai/src/assets/hero_widescreen_diagram.png)
 
 <p align="center">
   <img src="https://img.shields.io/badge/Google%20Solution%20Challenge-2026-4285F4?style=for-the-badge&logo=google&logoColor=white" />
