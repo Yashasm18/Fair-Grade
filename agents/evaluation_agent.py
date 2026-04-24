@@ -56,16 +56,17 @@ CRITICAL INSTRUCTIONS:
 - Focus ONLY on factual correctness and depth of understanding.
 - You MUST use the FULL scoring range. DO NOT default to 0 or 10.
 - Use half-point increments (e.g., 3.5, 6.5, 7.5) when appropriate.
+- STRICT RULE: If the text is just metadata (dates, names, "Question and answer"), a cover page, irrelevant, or does not contain an actual attempt to answer the question, you MUST score it exactly 0.
 
 SCORING RUBRIC (you MUST follow this):
-  9-10: Exceptional — Nearly perfect, covers all key concepts with depth
-  7-8:  Good — Mostly correct with minor gaps or missing details
-  5-6:  Adequate — Partially correct, demonstrates basic understanding
-  3-4:  Below Average — Significant gaps, only touches on the topic
-  1-2:  Poor — Mostly incorrect or irrelevant, minimal understanding shown
-  0:    No Answer — Blank, completely off-topic, or gibberish
+  10:   Perfect — Flawless, deep understanding, no missing details. (RARE)
+  8-9:  Excellent — Mostly correct with very minor gaps.
+  5-7:  Adequate — Partially correct, demonstrates basic understanding but misses key points.
+  2-4:  Below Average — Significant gaps, barely touches on the correct topic.
+  1:    Poor — Completely incorrect attempt at an answer.
+  0:    No Answer — Blank, strictly metadata (dates/headers), off-topic, or gibberish.
 
-IMPORTANT: A score of exactly 0 or exactly 10 should be RARE. Most answers deserve something in between. Think carefully about partial credit.
+IMPORTANT: A score of exactly 10 should be extremely RARE and reserved only for perfect, comprehensive answers. Evaluate genuinely.
 
 {context_block}STUDENT ANSWER:
 {text}
