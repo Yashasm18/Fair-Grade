@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FileSearch, Download, PieChart, Home, FileType, Sparkles, Zap } from 'lucide-react';
+import { FileSearch, Download, PieChart, Home, FileType, Sparkles, Zap, LogIn, LogOut, ShieldCheck, UserCheck } from 'lucide-react';
 import { auth, db } from "./config/firebase";
 import { collection, addDoc } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
-import { LogIn, LogOut, ShieldCheck, UserCheck } from 'lucide-react';
 import Analytics from "./Analytics";
 import EvaluationSetup from "./components/EvaluationSetup";
 import AgentPipeline from "./components/AgentPipeline";
@@ -561,8 +560,9 @@ function App() {
               </div>
             )}
           </div>
-
         </div>
+      )}
+      </>
       )}
 
       {/* ─── Footer ─── */}
