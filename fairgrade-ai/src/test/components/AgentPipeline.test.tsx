@@ -19,7 +19,7 @@ describe('AgentPipeline', () => {
 
   it('shows server wakeup message at step 0', () => {
     render(<AgentPipeline currentStep={0} fileName="test.png" />);
-    expect(screen.getByText(/Waking up server/)).toBeInTheDocument();
+    expect(screen.getByText(/Waking up secure server/)).toBeInTheDocument();
   });
 
   it('does not show server wakeup message at step > 0', () => {
