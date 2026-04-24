@@ -263,6 +263,7 @@ Fair-Grade/
     ├── Dockerfile                  # Container instructions for Render
     ├── .env.example                # Template for environment variables
     ├── .github/workflows/ci.yml    # Automated testing & build pipeline
+    ├── SAFETY_GUIDELINES.md        # Responsible AI & student privacy policy
     ├── CONTRIBUTING.md             # Guidelines for open-source contributors
     └── LICENSE                     # MIT License
 ```
@@ -280,6 +281,20 @@ Fair-Grade/
 | **Yashas M** | Full-Stack & AI Engineer | [@Yashasm18](https://github.com/Yashasm18) |
 
 > *Team VEKTOR — building technology for equitable education.*
+
+---
+
+## 🛡️ Responsible AI
+
+FairGrade AI is a **Sensitive AI** application. We take student privacy and AI safety seriously.
+
+📄 **[Read our full Safety & Responsible AI Guidelines →](SAFETY_GUIDELINES.md)**
+
+Key commitments:
+- **FERPA / GDPR** compliant data handling — no student PII is persisted
+- **Human-in-the-Loop** — AI advises, teachers decide
+- **In-memory processing** — answer sheets are never written to disk
+- **Non-confrontational bias reporting** — patterns, not blame
 
 ---
 
