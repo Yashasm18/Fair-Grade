@@ -1,3 +1,5 @@
+<div align="center"><img src="fairgrade.gif" width="220" alt="FairGrade AI"/></div>
+
 # 🏆 FairGrade AI — Bias Detection in Student Grading
 
 ![FairGrade AI](./fairgrade-ai/src/assets/hero_widescreen_diagram.png)
