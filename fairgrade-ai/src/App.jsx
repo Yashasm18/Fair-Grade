@@ -26,7 +26,7 @@ const DEMO_RESULTS = [
         explanation: "The student demonstrates strong understanding of mitochondrial function, correctly identifying ATP production via oxidative phosphorylation and the electron transport chain. Minor deduction for not mentioning the citric acid cycle. Overall, a comprehensive and factually accurate response.",
         confidenceScore: 0.95
       },
-      bias: { level: "Medium", status: "Undergraded", gap: 2.5, biasScorePercentage: 25.0, formulaUsed: "Bias Score (%) = (|Teacher Score - AI Score| / 10) * 100" },
+      bias: { level: "Medium", status: "Undergraded", gap: 2.5, biasScorePercentage: 32.2, confidenceWeight: 1.17, completenessFactor: 1.1, formulaUsed: "Bias Score (%) = (|Teacher − AI| / 10) × 100 × Confidence Weight (1.17) × Completeness Factor (1.1)" },
       verified: false
     },
     error: null
@@ -42,7 +42,7 @@ const DEMO_RESULTS = [
         explanation: "Good overview of the French Revolution's causes and key events. The student correctly identifies the main triggers and outcomes. Slight gap in discussing the Reign of Terror and its significance. The response is well-structured but could benefit from more specific dates and figures.",
         confidenceScore: 0.88
       },
-      bias: { level: "Low", status: "Fair", gap: 0.5, biasScorePercentage: 5.0, formulaUsed: "Bias Score (%) = (|Teacher Score - AI Score| / 10) * 100" },
+      bias: { level: "Low", status: "Fair", gap: 0.5, biasScorePercentage: 5.6, confidenceWeight: 1.12, completenessFactor: 0.9, formulaUsed: "Bias Score (%) = (|Teacher − AI| / 10) × 100 × Confidence Weight (1.12) × Completeness Factor (0.9)" },
       verified: false
     },
     error: null
@@ -58,7 +58,7 @@ const DEMO_RESULTS = [
         explanation: "Excellent mathematical reasoning. The factoring approach is correct, both solutions are accurate, and the student demonstrates good practice by verifying the answers. Near-perfect response with clear logical steps.",
         confidenceScore: 0.99
       },
-      bias: { level: "High", status: "Undergraded", gap: 4.5, biasScorePercentage: 45.0, formulaUsed: "Bias Score (%) = (|Teacher Score - AI Score| / 10) * 100" },
+      bias: { level: "High", status: "Undergraded", gap: 4.5, biasScorePercentage: 53.5, confidenceWeight: 1.19, completenessFactor: 0.9, formulaUsed: "Bias Score (%) = (|Teacher − AI| / 10) × 100 × Confidence Weight (1.19) × Completeness Factor (0.9)" },
       verified: false
     },
     error: null
