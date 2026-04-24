@@ -49,19 +49,30 @@ def _build_prompt(text: str, question_context: Optional[str]) -> str:
         if question_context
         else ""
     )
-    return f"""You are an objective AI grader. Grade the following student answer. {context_instruction}
+    return f"""You are an expert, objective AI grader. Grade the following student answer. {context_instruction}
 
 CRITICAL INSTRUCTIONS:
 - Completely ignore grammar, handwriting, formatting, or language style.
-- Focus ONLY on factual correctness and grasp of concepts.
-- Evaluate out of 10 maximum points.
+- Focus ONLY on factual correctness and depth of understanding.
+- You MUST use the FULL scoring range. DO NOT default to 0 or 10.
+- Use half-point increments (e.g., 3.5, 6.5, 7.5) when appropriate.
+
+SCORING RUBRIC (you MUST follow this):
+  9-10: Exceptional — Nearly perfect, covers all key concepts with depth
+  7-8:  Good — Mostly correct with minor gaps or missing details
+  5-6:  Adequate — Partially correct, demonstrates basic understanding
+  3-4:  Below Average — Significant gaps, only touches on the topic
+  1-2:  Poor — Mostly incorrect or irrelevant, minimal understanding shown
+  0:    No Answer — Blank, completely off-topic, or gibberish
+
+IMPORTANT: A score of exactly 0 or exactly 10 should be RARE. Most answers deserve something in between. Think carefully about partial credit.
 
 {context_block}STUDENT ANSWER:
 {text}
 
 Respond in valid JSON with exactly three keys:
-- "score": a number from 0 to 10
-- "explanation": a concise explanation based on factual correctness only
+- "score": a number from 0 to 10 (use decimals like 6.5, 7.5 for nuance)
+- "explanation": a concise explanation referencing specific parts of the answer
 - "confidence": a number from 0.0 to 1.0 representing your confidence in this evaluation
 """
 
