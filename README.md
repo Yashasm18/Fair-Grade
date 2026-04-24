@@ -77,12 +77,11 @@ To ensure the accuracy of our impact metrics, we conducted a three-phase validat
 
 ### How Bias Is Calculated
 
+$$ \text{Bias Score (\%)} = \min(100, |\text{Teacher Score} - \text{AI Score}| \times 10) $$
 
-Bias Score (%) = min(100, |Teacher Score − AI Score| × 10)
+$$ \text{Completeness Factor} = \min\left(1.0, \frac{\log(1 + \text{word\_count})}{\log(120)}\right) $$
 
-Completeness Factor = min(1.0, log(1 + word_count) / log(120))
-
-Final Bias Score = Bias Score × Completeness Factor
+$$ \text{Final Bias Score} = \text{Bias Score} \times \text{Completeness Factor} $$
 
 We use a normalized absolute difference between Teacher Score and AI Score to detect grading inconsistencies.
 
