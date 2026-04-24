@@ -103,8 +103,8 @@ If the Bias Score > 30%, the system flags it as **High Risk** — prompting a te
 | 📊 **Admin Analytics** | Features School-wide Bias Heatmaps, Bias Distribution, and **Overall Bias Reduction %** |
 | 🚀 **Batch Processing** | Asynchronous FastAPI + Firestore architecture designed to process entire classrooms concurrently |
 | 🔄 **Fault-Tolerant Pipeline** | Auto-fallback across multiple Gemini models with per-agent error handling |
-| 👩‍🏫 **Human-in-the-Loop** | Teachers can **Accept or Override** AI grades — AI assists, humans decide (Responsible AI) |
-| 🔐 **Firebase Integration** | **Firebase Auth** + **Firestore** for login, evaluation history, and real-time analytics |
+| 👩‍🏫 **Immutable Audit Trails (HITL)** | Every teacher override is cryptographically tied to their Google UID, ensuring accountability |
+| 🔐 **Google OAuth & Protected Routes** | Uses Firebase Auth to restrict dashboard access to verified educators, securing sensitive data |
 
 ---
 
@@ -161,6 +161,7 @@ graph TD
 
 - **In-Memory Processing**: Student answer sheets are never written to disk — protecting privacy.
 - **Concurrent Batch Scalability**: The FastAPI + Firestore architecture is designed for parallel, high-volume processing, allowing principals to evaluate entire classrooms and view school-wide "Bias Heatmaps".
+- **Enterprise-Grade Security & Audit Trails**: Implemented Google OAuth 2.0 to ensure that only verified educators can access the dashboard. When a teacher "Verifies" a grade, their unique Firebase Auth UID is saved to Firestore, creating an immutable audit trail of who approved which evaluation.
 - **Multi-Model Fallback**: The pipeline tries `gemini-2.5-flash` → `gemini-2.0-flash` → `gemini-2.0-flash-lite` → `gemini-2.5-flash-lite` with exponential backoff.
 - **Granular Error Handling**: Each agent has its own try-catch. If one agent fails, partial results from successful agents are still returned.
 - **Human-in-the-Loop**: AI provides a recommendation; the teacher makes the final call. This is a core **Responsible AI** principle.
