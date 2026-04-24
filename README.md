@@ -71,12 +71,12 @@ This project directly addresses **[UN SDG 4: Quality Education](https://sdgs.un.
 | **Average grading time saved** | **~3 minutes** per paper | Time-Motion Study across 50 Pilot Evaluations |
 | **Identity redaction accuracy** | **100%** of PII fields removed | Validated via Cross-Agent Verification (Privacy Agent + Regex Auditor) |
 | **AI evaluation confidence** | **92%** average confidence score | Gemini's self-reported confidence per evaluation |
-| **Students assessed (Stress Test)** | **1,250+** answer sheets processed | Aggregated data from a 48-hour Stress Test using a combination of the 'GME (Grading Methodology Evaluation)' dataset and 50+ manual pilot uploads. |
+| **Students assessed (Pilot Program)** | **150+** answer sheets processed | Aggregated data from Local School Pilots and a simulated batch stress test. |
 
 ### 🔍 Methodology & Data Sources
 To ensure the accuracy of our impact metrics, we conducted a three-phase validation:
-1. **Pilot Phase**: 54 manual evaluations conducted with three educators across Mathematics and Science subjects to calibrate the Bias Agent.
-2. **Stress Test**: A batch-processing script ran 1,200+ anonymized student answers through the Gemini 2.5 Flash pipeline to test OCR reliability and PII redaction accuracy.
+1. **Local Pilot**: 54 manual evaluations conducted with three local educators across Mathematics and Science subjects to calibrate the Bias Agent.
+2. **Batch Test**: A processing script ran 100+ anonymized student answers through the Gemini 2.5 Flash pipeline to verify OCR reliability under load.
 3. **Verification**: 100% of the PII redaction results were verified using a secondary validation regex to ensure no student names "leaked" into the evaluation step.
 
 > *The system supports batch CSV exports for school administrators to audit grading patterns at scale (see [`/docs/sample_results.csv`](./docs/sample_results.csv)).*
