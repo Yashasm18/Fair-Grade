@@ -69,7 +69,7 @@ function App() {
   const [isDark, setIsDark] = useState(() => {
     const stored = localStorage.getItem('fairgrade_theme');
     if (stored) return stored === 'dark';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return false; // Default to light mode
   });
 
   useEffect(() => {
