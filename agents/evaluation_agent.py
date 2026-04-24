@@ -1,6 +1,8 @@
 """
-Evaluation Agent — Grades anonymized student answers using Gemini.
+Evaluation Agent — Grades anonymized student answers using Google Gemini AI.
 
+Google Cloud Technology: Google Gemini API (google-genai SDK)
+Models: gemini-2.5-flash, gemini-2.0-flash, gemini-2.0-flash-lite, gemini-2.5-flash-lite
 Evaluates factual correctness against the teacher's rubric/context.
 Implements multi-model fallback with exponential backoff to handle
 free-tier quota limits gracefully.
@@ -57,9 +59,10 @@ CRITICAL INSTRUCTIONS:
 {context_block}STUDENT ANSWER:
 {text}
 
-Respond in valid JSON with exactly two keys:
+Respond in valid JSON with exactly three keys:
 - "score": a number from 0 to 10
 - "explanation": a concise explanation based on factual correctness only
+- "confidence": a number from 0.0 to 1.0 representing your confidence in this evaluation
 """
 
 
@@ -78,10 +81,10 @@ class EvaluationAgent:
             question_context: Optional rubric / expected answer from the teacher.
 
         Returns:
-            dict with keys 'score' (int) and 'explanation' (str).
+            dict with keys 'score' (int), 'explanation' (str), and 'confidence' (float).
         """
         if not self.client:
-            return {"score": 8, "explanation": "Mocked score — Gemini API key is not configured."}
+            return {"score": 8, "explanation": "Mocked score — Gemini API key is not configured.", "confidence": 0.0}
 
         prompt = _build_prompt(text, question_context)
         return self._run_with_fallback(prompt)
@@ -109,6 +112,7 @@ class EvaluationAgent:
                 "Please wait for the quota to reset (~24 hours) or enable billing at "
                 "https://aistudio.google.com/api-keys."
             ),
+            "confidence": 0.0,
         }
 
     def _try_model(self, model_name: str, prompt: str, types) -> Union[dict, Exception]:
@@ -132,7 +136,11 @@ class EvaluationAgent:
 
                 data = json.loads(result_text)
                 print(f"[EVAL] ✓ Success with {model_name}")
-                return {"score": data.get("score", 0), "explanation": data.get("explanation", "")}
+                return {
+                    "score": data.get("score", 0), 
+                    "explanation": data.get("explanation", ""),
+                    "confidence": data.get("confidence", 1.0)
+                }
 
             except Exception as exc:
                 err = str(exc)

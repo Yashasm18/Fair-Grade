@@ -37,10 +37,13 @@ class ReportingAgent:
                 "aiScore": evaluation["score"],
                 "teacherScore": teacher_score,
                 "explanation": evaluation["explanation"],
+                "confidenceScore": evaluation.get("confidence", 0.0)
             },
             "bias": {
                 "level": bias_info["severity"],
                 "status": bias_info["status"],
                 "gap": bias_info["difference"],
+                "biasScorePercentage": bias_info.get("bias_score_percentage", 0.0),
+                "formulaUsed": bias_info.get("formula_used", "")
             },
         }

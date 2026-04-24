@@ -1,6 +1,7 @@
 """
 OCR Agent — Extracts text from uploaded answer sheet images/PDFs.
 
+Google Cloud Technology: Google Gemini Vision API (gemini-2.5-flash)
 Uses Gemini Vision multimodal API with automatic fallback across models.
 Images are processed entirely in-memory and never written to disk.
 """

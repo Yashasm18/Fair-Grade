@@ -3,10 +3,12 @@
 FairGrade AI ensures fair evaluation by removing identity bias and using AI to detect grading inconsistencies — all while keeping data secure and private.
 
 ## New Features
+- **Explainable AI**: Returns an explicit Confidence Score and transparent custom Bias Percentage formulas.
+- **Impact Analytics**: Tracks real-world measurable impact with "Overall Bias Reduction" metrics and a visual Scatter Plot mapping of discrepancies.
 - **Question Context**: Teachers can now paste the question and model answer to guide the AI for more accurate grading.
 - **Batch Processing**: Supports uploading multiple answer sheets at once. The system will process them sequentially.
 - **PDF Support**: Upload PDF documents; the application will automatically extract the first page for OCR.
-- **Analytics Dashboard**: Tracks the aggregated average scores, bias distribution (Overgraded, Undergraded, Fair) over time, and history of recent evaluations.
+- **Cold Start Optimizations**: Intelligent frontend pre-warming background requests to keep Render backend responsive.
 - **Firestore Integration**: Persistently stores evaluation data mapped by timestamp and scores.
 
 ## Architecture

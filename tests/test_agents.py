@@ -117,3 +117,61 @@ class TestReportingAgent:
             teacher_score=4,
         )
         assert report["originalTextLength"] == len(text)
+
+
+# ---------------------------------------------------------------------------
+# BiasAgent — Bias Percentage Tests
+# ---------------------------------------------------------------------------
+
+class TestBiasPercentage:
+    def setup_method(self):
+        self.agent = BiasAgent()
+
+    def test_bias_percentage_zero(self):
+        result = self.agent.detect_bias(teacher_mark=8, ai_mark=8)
+        assert result["bias_score_percentage"] == 0.0
+
+    def test_bias_percentage_high(self):
+        result = self.agent.detect_bias(teacher_mark=2, ai_mark=9)
+        assert result["bias_score_percentage"] == 70.0
+
+    def test_bias_percentage_cap_at_100(self):
+        result = self.agent.detect_bias(teacher_mark=0, ai_mark=10)
+        assert result["bias_score_percentage"] == 100.0
+
+    def test_formula_present(self):
+        result = self.agent.detect_bias(teacher_mark=5, ai_mark=7)
+        assert "formula_used" in result
+        assert "Bias Score" in result["formula_used"]
+
+
+# ---------------------------------------------------------------------------
+# ReportingAgent — Confidence Score Tests
+# ---------------------------------------------------------------------------
+
+class TestReportingConfidence:
+    def setup_method(self):
+        self.agent = ReportingAgent()
+
+    def test_confidence_score_included(self):
+        report = self.agent.format_report(
+            extracted_text="Answer text",
+            clean_text="Answer text",
+            evaluation={"score": 8, "explanation": "Good.", "confidence": 0.95},
+            bias_info={"severity": "Low", "status": "Fair", "difference": 0.5,
+                        "bias_score_percentage": 5.0, "formula_used": "test"},
+            teacher_score=7.5,
+        )
+        assert report["evaluation"]["confidenceScore"] == 0.95
+
+    def test_bias_percentage_in_report(self):
+        report = self.agent.format_report(
+            extracted_text="Answer text",
+            clean_text="Answer text",
+            evaluation={"score": 5, "explanation": "Partial.", "confidence": 0.7},
+            bias_info={"severity": "High", "status": "Undergraded", "difference": 4,
+                        "bias_score_percentage": 40.0, "formula_used": "test"},
+            teacher_score=1,
+        )
+        assert report["bias"]["biasScorePercentage"] == 40.0
+

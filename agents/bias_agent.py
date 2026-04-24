@@ -25,11 +25,24 @@ class BiasAgent:
                 - 'status': 'Undergraded' | 'Overgraded' | 'Fair'
                 - 'severity': 'High' | 'Medium' | 'Low'
                 - 'difference': absolute score gap (float)
+                - 'bias_score_percentage': bias severity as a percentage (float)
+                - 'formula_used': string explaining the logic
         """
         diff = abs(teacher_mark - ai_mark)
         severity = self._classify_severity(diff)
         status = self._classify_status(teacher_mark, ai_mark)
-        return {"severity": severity, "status": status, "difference": diff}
+        
+        # Calculate bias percentage (assuming max score is 10)
+        bias_percentage = min((diff / 10.0) * 100, 100.0)
+        formula = "Bias Score (%) = (|Teacher Score - AI Score| / 10) * 100"
+        
+        return {
+            "severity": severity, 
+            "status": status, 
+            "difference": diff,
+            "bias_score_percentage": round(bias_percentage, 1),
+            "formula_used": formula
+        }
 
     # ------------------------------------------------------------------
     # Private helpers

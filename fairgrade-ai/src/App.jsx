@@ -22,9 +22,11 @@ const DEMO_RESULTS = [
       evaluation: {
         aiScore: 8.5,
         teacherScore: 6,
-        explanation: "The student demonstrates strong understanding of mitochondrial function, correctly identifying ATP production via oxidative phosphorylation and the electron transport chain. Minor deduction for not mentioning the citric acid cycle. Overall, a comprehensive and factually accurate response."
+        explanation: "The student demonstrates strong understanding of mitochondrial function, correctly identifying ATP production via oxidative phosphorylation and the electron transport chain. Minor deduction for not mentioning the citric acid cycle. Overall, a comprehensive and factually accurate response.",
+        confidenceScore: 0.95
       },
-      bias: { level: "Medium", status: "Undergraded", gap: 2.5 }
+      bias: { level: "Medium", status: "Undergraded", gap: 2.5, biasScorePercentage: 25.0, formulaUsed: "Bias Score (%) = (|Teacher Score - AI Score| / 10) * 100" },
+      verified: false
     },
     error: null
   },
@@ -36,9 +38,11 @@ const DEMO_RESULTS = [
       evaluation: {
         aiScore: 7,
         teacherScore: 7.5,
-        explanation: "Good overview of the French Revolution's causes and key events. The student correctly identifies the main triggers and outcomes. Slight gap in discussing the Reign of Terror and its significance. The response is well-structured but could benefit from more specific dates and figures."
+        explanation: "Good overview of the French Revolution's causes and key events. The student correctly identifies the main triggers and outcomes. Slight gap in discussing the Reign of Terror and its significance. The response is well-structured but could benefit from more specific dates and figures.",
+        confidenceScore: 0.88
       },
-      bias: { level: "Low", status: "Fair", gap: 0.5 }
+      bias: { level: "Low", status: "Fair", gap: 0.5, biasScorePercentage: 5.0, formulaUsed: "Bias Score (%) = (|Teacher Score - AI Score| / 10) * 100" },
+      verified: false
     },
     error: null
   },
@@ -50,9 +54,11 @@ const DEMO_RESULTS = [
       evaluation: {
         aiScore: 9.5,
         teacherScore: 5,
-        explanation: "Excellent mathematical reasoning. The factoring approach is correct, both solutions are accurate, and the student demonstrates good practice by verifying the answers. Near-perfect response with clear logical steps."
+        explanation: "Excellent mathematical reasoning. The factoring approach is correct, both solutions are accurate, and the student demonstrates good practice by verifying the answers. Near-perfect response with clear logical steps.",
+        confidenceScore: 0.99
       },
-      bias: { level: "High", status: "Undergraded", gap: 4.5 }
+      bias: { level: "High", status: "Undergraded", gap: 4.5, biasScorePercentage: 45.0, formulaUsed: "Bias Score (%) = (|Teacher Score - AI Score| / 10) * 100" },
+      verified: false
     },
     error: null
   }
@@ -70,6 +76,11 @@ function App() {
     document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
     localStorage.setItem('fairgrade_theme', isDark ? 'dark' : 'light');
   }, [isDark]);
+
+  // ─── Pre-warm Backend ───
+  useEffect(() => {
+    fetch(`${API_URL}/`).catch(() => { /* ignore pre-warm errors */ });
+  }, []);
 
   // ─── Navigation & Demo Mode ───
   const [activeTab, setActiveTab] = useState('evaluate');
@@ -312,6 +323,39 @@ function App() {
     window.print();
   };
 
+  // ─── Human-in-the-Loop: Teacher Verification ───
+  const verifyEvaluation = async (fileName, verifyData) => {
+    try {
+      const response = await fetch(`${API_URL}/api/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName, ...verifyData }),
+      });
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Verification saved:', result);
+        // Save verification to Firestore
+        try {
+          if (import.meta.env.VITE_FIREBASE_API_KEY) {
+            await addDoc(collection(db, 'verifications'), {
+              fileName,
+              action: verifyData.action,
+              finalScore: verifyData.finalScore,
+              originalAiScore: verifyData.originalAiScore,
+              originalTeacherScore: verifyData.originalTeacherScore,
+              overrideReason: verifyData.overrideReason || null,
+              timestamp: new Date(),
+            });
+          }
+        } catch (fsErr) {
+          console.error('Failed to save verification to Firestore:', fsErr);
+        }
+      }
+    } catch (err) {
+      console.error('Verification request failed:', err);
+    }
+  };
+
   // ─── Demo Mode ───
   const activateDemo = () => {
     setDemoMode(true);
@@ -339,7 +383,7 @@ function App() {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 className="logo-text">FairGrade AI</h1>
-          <p className="subtitle">Detecting grading inconsistencies securely using AI</p>
+          <p className="subtitle">Exposing hidden bias affecting millions of students to give schools actionable insights.</p>
         </div>
         <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
           <DarkModeToggle isDark={isDark} onToggle={() => setIsDark(!isDark)} />
@@ -446,6 +490,7 @@ function App() {
                     result={res}
                     studentId={studentIds[res.fileName] || (demoMode ? ['STU-001', 'STU-002', 'STU-003'][i] : 'N/A')}
                     onRetry={!demoMode ? retryFile : null}
+                    onVerify={verifyEvaluation}
                     truncateName={truncateName}
                   />
                 ))}

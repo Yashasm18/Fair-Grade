@@ -19,6 +19,12 @@ const AgentPipeline = ({ currentStep, fileName }) => {
       <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: '1rem' }}>
         Running multi-agent evaluation pipeline
       </p>
+      {currentStep === 0 && (
+        <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(139, 92, 246, 0.1)', borderRadius: '8px', border: '1px solid rgba(139, 92, 246, 0.2)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div className="animate-spin" style={{ width: '16px', height: '16px', border: '2px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
+          <span style={{ fontSize: '0.85rem', color: 'var(--primary)' }}>Waking up server... (This may take up to 30s on free hosting)</span>
+        </div>
+      )}
       <div className="progress-container">
         {steps.map((step, idx) => (
           <div
