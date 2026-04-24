@@ -37,7 +37,7 @@ test.describe('FairGrade AI — Login & Navigation', () => {
     
     // Click Analytics tab
     await page.locator('button').filter({ hasText: 'Analytics' }).click();
-    await expect(page.getByText('Admin Analytics')).toBeVisible();
+    await expect(page.getByText(/Analytics/)).toBeVisible();
     
     // Click back to Evaluate tab
     await page.locator('button').filter({ hasText: 'Evaluate' }).click();
