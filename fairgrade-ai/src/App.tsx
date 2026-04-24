@@ -2,19 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { FileSearch, Download, PieChart, Home, FileType, Sparkles, Zap, LogIn, LogOut, ShieldCheck, UserCheck } from 'lucide-react';
 import { auth, db } from "./config/firebase";
 import { collection, addDoc } from "firebase/firestore";
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from "firebase/auth";
 import Analytics from "./Analytics";
 import EvaluationSetup from "./components/EvaluationSetup";
 import AgentPipeline from "./components/AgentPipeline";
 import ResultCard from "./components/ResultCard";
 import Footer from "./components/Footer";
 import DarkModeToggle from "./components/DarkModeToggle";
+import type { FileResult, VerifyPayload } from './types';
 
 // ─── Configurable API URL ───
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 // Prompt template is handled server-side in app.py
 // ─── Demo Mode Sample Data ───
-const DEMO_RESULTS = [
+const DEMO_RESULTS: FileResult[] = [
   {
     fileName: "demo_answer_biology.jpg",
     data: {
@@ -67,7 +68,7 @@ const DEMO_RESULTS = [
 
 function App() {
   // ─── Dark Mode ───
-  const [isDark, setIsDark] = useState(() => {
+  const [isDark, setIsDark] = useState<boolean>(() => {
     const stored = localStorage.getItem('fairgrade_theme');
     if (stored) return stored === 'dark';
     return false; // Default to light mode
@@ -84,11 +85,11 @@ function App() {
   }, []);
 
   // ─── Navigation & Demo Mode ───
-  const [activeTab, setActiveTab] = useState('evaluate');
+  const [activeTab, setActiveTab] = useState<'evaluate' | 'analytics'>('evaluate');
   const [demoMode, setDemoMode] = useState(false);
 
   // ─── Authentication State ───
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
@@ -98,7 +99,7 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  const handleLogin = async () => {
+  const handleLogin = async (): Promise<void> => {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
@@ -108,27 +109,27 @@ function App() {
     }
   };
 
-  const handleLogout = () => signOut(auth);
+  const handleLogout = (): void => { signOut(auth); };
 
   // ─── Evaluation State ───
   const [teacherScore, setTeacherScore] = useState('');
   const [questionContext, setQuestionContext] = useState('');
-  const [studentIds, setStudentIds] = useState({});
-  const [files, setFiles] = useState([]);
+  const [studentIds, setStudentIds] = useState<Record<string, string>>({});
+  const [files, setFiles] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
 
   // ─── Processing State ───
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentFileIndex, setCurrentFileIndex] = useState(-1);
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState<FileResult[]>([]);
   const [currentStep, setCurrentStep] = useState(-1);
   const [globalError, setGlobalError] = useState('');
 
-  const handleStudentIdChange = (fileName, value) => {
+  const handleStudentIdChange = (fileName: string, value: string): void => {
     setStudentIds(prev => ({ ...prev, [fileName]: value }));
   };
 
-  const handleDrag = function (e) {
+  const handleDrag = function (e: React.DragEvent<HTMLDivElement>): void {
     e.preventDefault();
     e.stopPropagation();
     if (e.type === "dragenter" || e.type === "dragover") {
@@ -138,7 +139,7 @@ function App() {
     }
   };
 
-  const handleDrop = function (e) {
+  const handleDrop = function (e: React.DragEvent<HTMLDivElement>): void {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
@@ -147,14 +148,14 @@ function App() {
     }
   };
 
-  const handleChange = function (e) {
+  const handleChange = function (e: React.ChangeEvent<HTMLInputElement>): void {
     e.preventDefault();
     if (e.target.files && e.target.files.length > 0) {
       setFiles(Array.from(e.target.files));
     }
   };
 
-  const removeFile = (fileName) => {
+  const removeFile = (fileName: string): void => {
     setFiles(prev => prev.filter(f => f.name !== fileName));
     setStudentIds(prev => {
       const next = { ...prev };
@@ -163,14 +164,14 @@ function App() {
     });
   };
 
-  const truncateName = (name, max = 28) => {
+  const truncateName = (name: string, max: number = 28): string => {
     if (!name || name.length <= max) return name || '';
     const ext = name.substring(name.lastIndexOf('.'));
     return name.substring(0, max - ext.length - 3) + '...' + ext;
   };
 
   // ─── Retry a single failed file ───
-  const retryFile = async (fileName) => {
+  const retryFile = async (fileName: string): Promise<void> => {
     const file = files.find(f => f.name === fileName);
     if (!file) return;
 
@@ -214,19 +215,19 @@ function App() {
         console.error("Failed to save to Firestore:", fsErr);
       }
     } catch (err) {
-      updatedResults[idx] = { fileName: file.name, data: null, error: err.message };
+      updatedResults[idx] = { fileName: file.name, data: null, error: (err as Error).message };
     }
 
     setResults(updatedResults);
   };
 
   // ─── Main Pipeline ───
-  const runAgents = async () => {
+  const runAgents = async (): Promise<void> => {
     if (files.length === 0) {
       setGlobalError("Please upload at least one answer sheet.");
       return;
     }
-    if (teacherScore === '' || teacherScore < 0 || teacherScore > 10) {
+    if (teacherScore === '' || Number(teacherScore) < 0 || Number(teacherScore) > 10) {
       setGlobalError("Please provide a valid teacher score between 0 and 10.");
       return;
     }
@@ -236,7 +237,7 @@ function App() {
       setGlobalError('');
       setResults([]);
 
-      const sessionResults = [];
+      const sessionResults: FileResult[] = [];
 
       for (let i = 0; i < files.length; i++) {
         setCurrentFileIndex(i);
@@ -274,7 +275,7 @@ function App() {
           }
 
           const data = await response.json();
-          const reportObj = { fileName: file.name, data, error: null };
+          const reportObj: FileResult = { fileName: file.name, data, error: null };
           sessionResults.push(reportObj);
 
           // --- Save to Firestore ---
@@ -302,13 +303,13 @@ function App() {
 
         } catch (err) {
           clearInterval(stepInterval);
-          sessionResults.push({ fileName: file.name, data: null, error: err.message });
+          sessionResults.push({ fileName: file.name, data: null, error: (err as Error).message });
         }
 
         setResults([...sessionResults]);
       }
     } catch (err) {
-      setGlobalError(err.message || "An unexpected error occurred during batch evaluation.");
+      setGlobalError((err as Error).message || "An unexpected error occurred during batch evaluation.");
     } finally {
       setIsProcessing(false);
       setCurrentFileIndex(-1);
@@ -317,18 +318,18 @@ function App() {
   };
 
   // ─── CSV Export ───
-  const exportToCSV = () => {
+  const exportToCSV = (): void => {
     const data = demoMode ? DEMO_RESULTS : results;
     if (data.length === 0) return;
     const headers = ['File Name', 'Student Tracking ID', 'Teacher Score', 'AI Score', 'Bias Level', 'Bias Status', 'AI Explanation'];
     const rows = data.map(r => {
-      if (r.error) return [r.fileName, '', '', '', '', 'Error', r.error];
+      if (r.error || !r.data) return [r.fileName, '', '', '', '', 'Error', r.error || ''];
       const id = studentIds[r.fileName] || 'N/A';
       return [
         r.fileName,
         id,
-        r.data.evaluation.teacherScore,
-        r.data.evaluation.aiScore,
+        String(r.data.evaluation.teacherScore),
+        String(r.data.evaluation.aiScore),
         r.data.bias.level,
         r.data.bias.status,
         `"${r.data.evaluation.explanation.replace(/"/g, '""')}"`
@@ -345,12 +346,12 @@ function App() {
   };
 
   // ─── PDF Export (print-friendly) ───
-  const exportToPDF = () => {
+  const exportToPDF = (): void => {
     window.print();
   };
 
   // ─── Human-in-the-Loop: Teacher Verification ───
-  const verifyEvaluation = async (fileName, verifyData) => {
+  const verifyEvaluation = async (fileName: string, verifyData: VerifyPayload): Promise<void> => {
     try {
       const response = await fetch(`${API_URL}/api/verify`, {
         method: 'POST',
@@ -384,7 +385,7 @@ function App() {
   };
 
   // ─── Demo Mode ───
-  const activateDemo = () => {
+  const activateDemo = (): void => {
     setDemoMode(true);
     setTeacherScore('6');
     setStudentIds({
@@ -394,7 +395,7 @@ function App() {
     });
   };
 
-  const exitDemo = () => {
+  const exitDemo = (): void => {
     setDemoMode(false);
     setResults([]);
     setTeacherScore('');

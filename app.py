@@ -11,11 +11,20 @@ Agents:
 """
 
 import os
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 from dotenv import load_dotenv
+
+# ---------------------------------------------------------------------------
+# Rate Limiting (slowapi)
+# ---------------------------------------------------------------------------
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+limiter = Limiter(key_func=get_remote_address)
 
 load_dotenv()
 
@@ -47,6 +56,23 @@ bias_agent = BiasAgent()
 reporting_agent = ReportingAgent()
 
 # ---------------------------------------------------------------------------
+# CORS — Environment-aware configuration
+# ---------------------------------------------------------------------------
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")  # "production" or "development"
+
+PRODUCTION_ORIGINS = [
+    "https://team-vektor-fairgrade.vercel.app",
+]
+
+DEVELOPMENT_ORIGINS = [
+    "https://team-vektor-fairgrade.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
+
+allowed_origins = PRODUCTION_ORIGINS if ENVIRONMENT == "production" else DEVELOPMENT_ORIGINS
+
+# ---------------------------------------------------------------------------
 # FastAPI app
 # ---------------------------------------------------------------------------
 app = FastAPI(
@@ -55,16 +81,16 @@ app = FastAPI(
     description="Multi-agent pipeline powered by Google Gemini AI for UN SDG 4.",
 )
 
+# Register rate limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://team-vektor-fairgrade.vercel.app",
-        "http://localhost:5173",
-        "http://localhost:3000",
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 
@@ -85,7 +111,8 @@ class TeacherOverride(BaseModel):
 # ---------------------------------------------------------------------------
 
 @app.get("/", tags=["Health"])
-def health_check():
+@limiter.limit("60/minute")
+def health_check(request: Request):
     """Liveness probe with Google tech details."""
     return {
         "status": "FairGrade AI backend is running",
@@ -99,7 +126,9 @@ def health_check():
 
 
 @app.post("/api/evaluate", tags=["Pipeline"])
+@limiter.limit("10/minute")
 async def evaluate_answer(
+    request: Request,
     file: UploadFile = File(...),
     teacher_score: float = Form(...),
     question_context: str = Form(None),
@@ -189,7 +218,8 @@ async def evaluate_answer(
 
 
 @app.post("/api/verify", tags=["Human-in-the-Loop"])
-async def verify_evaluation(override: TeacherOverride):
+@limiter.limit("20/minute")
+async def verify_evaluation(request: Request, override: TeacherOverride):
     """
     Responsible AI: Teacher accepts or overrides the AI grade.
     AI assists humans — humans make the final decision.
@@ -221,7 +251,8 @@ async def verify_evaluation(override: TeacherOverride):
 
 
 @app.post("/analyze", tags=["Lightweight"])
-async def analyze(file: UploadFile = File(...)):
+@limiter.limit("30/minute")
+async def analyze(request: Request, file: UploadFile = File(...)):
     """Lightweight endpoint: OCR + quick Gemini analysis only (no bias detection)."""
     try:
         content = await file.read()

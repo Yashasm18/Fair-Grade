@@ -8,17 +8,43 @@ import {
 } from 'recharts';
 import { Loader2, TrendingUp, Users, Scale, BarChart2, ClipboardList, Zap, CheckCircle2 } from 'lucide-react';
 import AnimatedCounter from './components/AnimatedCounter';
+import type { FirestoreEvaluation } from './types';
 
-const Analytics = () => {
-  const [evaluations, setEvaluations] = useState([]);
+interface AnalyticsStats {
+  avgAi: number | string;
+  avgTeacher: number | string;
+  totalEvals: number;
+  biasCounts: { Fair: number; Overgraded: number; Undergraded: number };
+}
+
+interface TrendPoint {
+  date: string;
+  'AI Score': number;
+  'Teacher Score': number;
+}
+
+interface ChartDataPoint {
+  name: string;
+  count: number;
+  fill: string;
+}
+
+interface PieDataPoint {
+  name: string;
+  value: number;
+  fill: string;
+}
+
+const Analytics: React.FC = () => {
+  const [evaluations, setEvaluations] = useState<FirestoreEvaluation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<AnalyticsStats>({
     avgAi: 0,
     avgTeacher: 0,
     totalEvals: 0,
     biasCounts: { Fair: 0, Overgraded: 0, Undergraded: 0 }
   });
-  const [trendData, setTrendData] = useState([]);
+  const [trendData, setTrendData] = useState<TrendPoint[]>([]);
 
   useEffect(() => {
     const fetchEvals = async () => {
@@ -30,14 +56,14 @@ const Analytics = () => {
       try {
         const q = query(collection(db, "evaluations"), orderBy("timestamp", "desc"), limit(50));
         const snapshot = await getDocs(q);
-        const evals = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const evals: FirestoreEvaluation[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEvaluation));
 
         setEvaluations(evals.slice(0, 10)); // keep last 10 for display
 
         if (evals.length > 0) {
           let totalAi = 0;
           let totalTeacher = 0;
-          const counts = { Fair: 0, Overgraded: 0, Undergraded: 0 };
+          const counts: Record<string, number> = { Fair: 0, Overgraded: 0, Undergraded: 0 };
 
           evals.forEach(e => {
             totalAi += Number(e.ai_score);
@@ -51,11 +77,11 @@ const Analytics = () => {
             avgAi: (totalAi / evals.length).toFixed(1),
             avgTeacher: (totalTeacher / evals.length).toFixed(1),
             totalEvals: evals.length,
-            biasCounts: counts
+            biasCounts: counts as AnalyticsStats['biasCounts']
           });
 
           // Build trend data (group by date)
-          const dateMap = {};
+          const dateMap: Record<string, { date: string; aiAvg: number; teacherAvg: number; count: number }> = {};
           evals.forEach(e => {
             const date = e.timestamp
               ? new Date(e.timestamp.seconds * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
@@ -68,7 +94,7 @@ const Analytics = () => {
             dateMap[date].count += 1;
           });
 
-          const trend = Object.values(dateMap)
+          const trend: TrendPoint[] = Object.values(dateMap)
             .map(d => ({
               date: d.date,
               'AI Score': Number((d.aiAvg / d.count).toFixed(1)),
@@ -130,13 +156,13 @@ const Analytics = () => {
     );
   }
 
-  const chartData = [
+  const chartData: ChartDataPoint[] = [
     { name: 'Undergraded', count: stats.biasCounts.Undergraded, fill: '#d97706' },
     { name: 'Fair', count: stats.biasCounts.Fair, fill: '#059669' },
     { name: 'Overgraded', count: stats.biasCounts.Overgraded, fill: '#dc2626' }
   ];
 
-  const pieData = [
+  const pieData: PieDataPoint[] = [
     { name: 'Fair', value: stats.biasCounts.Fair, fill: '#059669' },
     { name: 'Undergraded', value: stats.biasCounts.Undergraded, fill: '#d97706' },
     { name: 'Overgraded', value: stats.biasCounts.Overgraded, fill: '#dc2626' }
@@ -144,14 +170,16 @@ const Analytics = () => {
 
   const totalEvals = evaluations.length;
 
-  const getBiasColor = (status) => {
+  const getBiasColor = (status: string): { bg: string; text: string } => {
     if (status === 'Fair') return { bg: 'rgba(5, 150, 105, 0.1)', text: '#059669' };
     if (status === 'Undergraded') return { bg: 'rgba(217, 119, 6, 0.1)', text: '#d97706' };
     return { bg: 'rgba(220, 38, 38, 0.1)', text: '#dc2626' };
   };
 
   const RADIAN = Math.PI / 180;
-  const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+  const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: {
+    cx: number; cy: number; midAngle: number; innerRadius: number; outerRadius: number; percent: number;
+  }): React.ReactElement | null => {
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
@@ -388,7 +416,7 @@ const Analytics = () => {
                   return (
                     <tr key={e.id} style={{ borderBottom: '1px solid rgba(139, 92, 246, 0.06)', transition: 'background 0.2s' }}>
                       <td style={{ padding: '0.85rem 0.5rem', whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
-                        {e.timestamp ? new Date(e.timestamp?.seconds * 1000).toLocaleString() : 'Just now'}
+                        {e.timestamp ? new Date(e.timestamp.seconds * 1000).toLocaleString() : 'Just now'}
                       </td>
                       <td style={{ padding: '0.85rem 0.5rem', fontWeight: 'bold', fontSize: '0.9rem', color: 'var(--primary)' }}>{e.ai_score}</td>
                       <td style={{ padding: '0.85rem 0.5rem', fontSize: '0.9rem' }}>{e.teacher_score}</td>

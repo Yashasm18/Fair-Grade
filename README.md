@@ -78,7 +78,7 @@ To ensure the accuracy of our impact metrics, we conducted a three-phase validat
 ### How Bias Is Calculated
 
 ```
-Weighted Bias Score (%) = Raw Bias × Confidence Weight × Completeness Factor
+Bias Score (%) = Raw Bias × Confidence Weight × Completeness Factor
 
 Where:
   Raw Bias         = (|Teacher Score − AI Score| / 10) × 100
@@ -88,7 +88,7 @@ Where:
 
 > **Why weighted?** A simple score difference doesn't account for *how sure* the AI was, or *how much* the student wrote. If the AI had low confidence (e.g., 30%), the bias signal is discounted — the AI itself is uncertain. If the student wrote only a few words, the AI lacked context, so bias is further reduced. This prevents false positives and produces **research-grade** bias detection.
 
-If the Weighted Bias Score > 30%, the system flags it as **High Risk** — prompting a teacher review via our **Human-in-the-Loop** verification flow.
+If the Bias Score > 30%, the system flags it as **High Risk** — prompting a teacher review via our **Human-in-the-Loop** verification flow.
 
 ---
 
@@ -171,6 +171,7 @@ graph TD
 
 <p align="center">
   <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
   <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
   <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" />
   <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
@@ -182,12 +183,12 @@ graph TD
 
 | Layer | Technology | Google Integration |
 |-------|-----------|--------------------|
-| **Frontend** | React, Vite, CSS3 (Glassmorphism), Recharts | Firebase Auth, Firestore SDK |
+| **Frontend** | React, TypeScript, Vite, CSS3 (Glassmorphism), Recharts | Firebase Auth, Firestore SDK |
 | **Backend** | Python, FastAPI, Uvicorn | **Google Gemini API** (`google-genai` SDK) |
 | **AI Engine** | Gemini 2.5 Flash, Gemini 2.0 Flash Lite | **Multi-model fallback** with structured prompts |
 | **Database** | Firebase Firestore (real-time) | **Cloud Firestore** for eval history & verifications |
 | **Deployment** | Vercel (Frontend) + Render (Backend) | — |
-| **CI/CD** | GitHub Actions (lint + test + build) | — |
+| **CI/CD** | GitHub Actions (TypeScript check + Vitest + build + Playwright E2E) | — |
 
 ---
 
@@ -238,9 +239,15 @@ The app will be available at `http://localhost:5173`
 ### 3. Run Tests
 
 ```bash
-# From the project root
+# Backend tests (from project root)
 pip install pytest
 pytest tests/ -v
+
+# Frontend tests (from fairgrade-ai/)
+cd fairgrade-ai
+npm test              # 27 unit tests (Vitest + React Testing Library)
+npm run type-check    # TypeScript strict mode check
+npm run e2e           # Playwright E2E tests (requires: npx playwright install)
 ```
 
 ---
@@ -262,15 +269,19 @@ Fair-Grade/
 │   └── tests/
 │       └── test_agents.py          # Unit tests for the AI agents
 │
-├── ⚛️ Frontend (React / Vite)
+├── ⚛️ Frontend (React / TypeScript / Vite)
 │   └── fairgrade-ai/
 │       ├── package.json            # Node dependencies
-│       ├── vite.config.js          # Vite build configuration
+│       ├── tsconfig.json           # TypeScript strict configuration
+│       ├── vite.config.js          # Vite + Vitest configuration
+│       ├── playwright.config.ts    # E2E test configuration
 │       └── src/
-│           ├── App.jsx             # Main Application + HITL verification
-│           ├── Analytics.jsx       # Bias Visualization Dashboard
+│           ├── App.tsx             # Main Application + HITL verification
+│           ├── Analytics.tsx       # Bias Visualization Dashboard
+│           ├── types.ts            # Shared TypeScript interfaces
 │           ├── components/         # Reusable UI (ResultCard w/ Accept/Override)
-│           └── config/             # Firebase configuration
+│           ├── config/             # Firebase configuration
+│           └── test/               # Unit tests (Vitest + React Testing Library)
 │
 └── ⚙️ Config & Deployment
     ├── Dockerfile                  # Container instructions for Render

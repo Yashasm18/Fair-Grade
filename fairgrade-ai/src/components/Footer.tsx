@@ -4,7 +4,7 @@ import { GraduationCap, Heart, Sparkles } from 'lucide-react';
 /**
  * Footer — SDG 4 badge, Gemini attribution, team info.
  */
-const Footer = () => {
+const Footer: React.FC = () => {
   return (
     <footer className="app-footer">
       <div className="footer-inner">

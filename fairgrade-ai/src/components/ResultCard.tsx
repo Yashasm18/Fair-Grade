@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import { RotateCcw, AlertTriangle, Clock, CheckCircle, Edit3, ShieldCheck } from 'lucide-react';
+import type { ResultCardProps, EvaluationReport } from '../types';
 
 /**
  * ResultCard — Displays evaluation results with Human-in-the-Loop controls.
  * Teachers can Accept or Override AI grades (Responsible AI pattern).
  */
 
-const RenderExplanation = ({ explanation }) => {
+interface RenderExplanationProps {
+  explanation: string;
+}
+
+const RenderExplanation: React.FC<RenderExplanationProps> = ({ explanation }) => {
   if (!explanation) return <span>Waiting for AI pipeline...</span>;
 
   const isQuotaExhausted = explanation.startsWith('QUOTA_EXHAUSTED:');
@@ -68,7 +73,7 @@ const RenderExplanation = ({ explanation }) => {
   return <span>{explanation}</span>;
 };
 
-const ResultCard = ({ result, studentId, onRetry, onVerify, truncateName }) => {
+const ResultCard: React.FC<ResultCardProps> = ({ result, studentId, onRetry, onVerify, truncateName }) => {
   const { fileName, data: report, error } = result;
   const displayName = truncateName(fileName);
 
@@ -77,9 +82,10 @@ const ResultCard = ({ result, studentId, onRetry, onVerify, truncateName }) => {
   const [overrideScore, setOverrideScore] = useState('');
   const [overrideReason, setOverrideReason] = useState('');
   const [verified, setVerified] = useState(report?.verified || false);
-  const [verifyAction, setVerifyAction] = useState(null); // 'accept_ai' | 'override'
+  const [verifyAction, setVerifyAction] = useState<'accept_ai' | 'override' | null>(null);
 
-  const handleAcceptAi = () => {
+  const handleAcceptAi = (): void => {
+    if (!report) return;
     setVerified(true);
     setVerifyAction('accept_ai');
     if (onVerify) {
@@ -92,7 +98,8 @@ const ResultCard = ({ result, studentId, onRetry, onVerify, truncateName }) => {
     }
   };
 
-  const handleOverrideSubmit = () => {
+  const handleOverrideSubmit = (): void => {
+    if (!report) return;
     const score = parseFloat(overrideScore);
     if (isNaN(score) || score < 0 || score > 10) return;
     setVerified(true);
@@ -124,6 +131,8 @@ const ResultCard = ({ result, studentId, onRetry, onVerify, truncateName }) => {
       </div>
     );
   }
+
+  if (!report) return null;
 
   const isQuotaIssue = report.evaluation.explanation?.startsWith('QUOTA_EXHAUSTED:') ||
                         report.evaluation.explanation?.startsWith('Evaluation failed:');
@@ -174,7 +183,7 @@ const ResultCard = ({ result, studentId, onRetry, onVerify, truncateName }) => {
               <p style={{ marginTop: '0.4rem', fontWeight: 'bold', fontSize: '0.85rem' }} className={`status-${report.bias.status}`}>&rarr; {report.bias.status}</p>
               {report.bias.biasScorePercentage !== undefined && (
                 <div style={{ marginTop: '0.4rem', fontSize: '0.7rem', color: 'var(--text-muted)' }} title={report.bias.formulaUsed}>
-                  Weighted Bias: <strong style={{ color: 'var(--text-main)' }}>{report.bias.biasScorePercentage}%</strong>
+                  Bias Score: <strong style={{ color: 'var(--text-main)' }}>{report.bias.biasScorePercentage}%</strong>
                   {report.bias.confidenceWeight && (
                     <div style={{ marginTop: '0.2rem', fontSize: '0.65rem', opacity: 0.8 }}>
                       CW: {report.bias.confidenceWeight} · CF: {report.bias.completenessFactor}

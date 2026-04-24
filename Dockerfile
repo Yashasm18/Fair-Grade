@@ -18,6 +18,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy backend application
+COPY agents/ agents/
 COPY app.py .
 
 # Expose port (Cloud Run uses 8080 by default)

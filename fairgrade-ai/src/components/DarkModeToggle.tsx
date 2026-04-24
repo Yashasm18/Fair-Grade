@@ -1,11 +1,12 @@
 import React from 'react';
 import { Moon, Sun } from 'lucide-react';
+import type { DarkModeToggleProps } from '../types';
 
 /**
  * DarkModeToggle — Renders a toggle pill switch for dark/light theme.
  * Persists choice in localStorage and sets data-theme on <html>.
  */
-const DarkModeToggle = ({ isDark, onToggle }) => {
+const DarkModeToggle: React.FC<DarkModeToggleProps> = ({ isDark, onToggle }) => {
   return (
     <button
       className="dark-mode-toggle"

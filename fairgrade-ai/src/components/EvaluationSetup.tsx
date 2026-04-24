@@ -1,25 +1,26 @@
 import React, { useState } from 'react';
 import { Upload, Shield, Loader2, Sparkles, X, BookOpen, Save, Trash2 } from 'lucide-react';
+import type { EvaluationSetupProps, QuestionPreset } from '../types';
 
 /**
  * Question presets saved in localStorage.
  */
 const PRESETS_KEY = 'fairgrade_question_presets';
 
-const loadPresets = () => {
+const loadPresets = (): QuestionPreset[] => {
   try {
     return JSON.parse(localStorage.getItem(PRESETS_KEY) || '[]');
   } catch { return []; }
 };
 
-const savePresets = (presets) => {
+const savePresets = (presets: QuestionPreset[]): void => {
   localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
 };
 
 /**
  * EvaluationSetup — Left sidebar with scoring, question bank, file upload, and run button.
  */
-const EvaluationSetup = ({
+const EvaluationSetup: React.FC<EvaluationSetupProps> = ({
   teacherScore,
   setTeacherScore,
   questionContext,
@@ -38,11 +39,11 @@ const EvaluationSetup = ({
   globalError,
   truncateName,
 }) => {
-  const [presets, setPresets] = useState(loadPresets());
+  const [presets, setPresets] = useState<QuestionPreset[]>(loadPresets());
   const [presetName, setPresetName] = useState('');
   const [showPresets, setShowPresets] = useState(false);
 
-  const handleSavePreset = () => {
+  const handleSavePreset = (): void => {
     if (!presetName.trim() || !questionContext.trim()) return;
     const updated = [...presets, { name: presetName.trim(), context: questionContext }];
     setPresets(updated);
@@ -50,12 +51,12 @@ const EvaluationSetup = ({
     setPresetName('');
   };
 
-  const handleLoadPreset = (preset) => {
+  const handleLoadPreset = (preset: QuestionPreset): void => {
     setQuestionContext(preset.context);
     setShowPresets(false);
   };
 
-  const handleDeletePreset = (idx) => {
+  const handleDeletePreset = (idx: number): void => {
     const updated = presets.filter((_, i) => i !== idx);
     setPresets(updated);
     savePresets(updated);
@@ -180,11 +181,11 @@ const EvaluationSetup = ({
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        onClick={() => document.getElementById("file-upload").click()}
+        onClick={() => document.getElementById("file-upload")?.click()}
         role="button"
         tabIndex={0}
         aria-label="Upload answer sheets. Drag and drop or click to browse."
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') document.getElementById("file-upload").click(); }}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') document.getElementById("file-upload")?.click(); }}
       >
         <Upload size={28} />
         <p>{files.length > 0 ? `${files.length} file(s) selected` : "Drag & drop images/PDFs or click to browse"}</p>

@@ -10,3 +10,6 @@ fairgrade-ai/dist/
 fairgrade-ai/.env
 vision-key.json
 .pytest_cache/
+fairgrade-ai/playwright-report/
+fairgrade-ai/test-results/
+fairgrade-ai/coverage/

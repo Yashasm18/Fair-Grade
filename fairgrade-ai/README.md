@@ -61,7 +61,7 @@ The frontend connects to the local backend `http://localhost:8000`.
    ```bash
    npm install
    ```
-3. Provide your Firebase Configuration in `.env` (maps to `src/config/firebase.js`).
+3. Provide your Firebase Configuration in `.env` (maps to `src/config/firebase.ts`).
 4. Start the Vite React development server:
    ```bash
    npm run dev

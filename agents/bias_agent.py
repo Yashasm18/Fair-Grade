@@ -1,5 +1,5 @@
 """
-Bias Detection Agent — Multi-Factor Weighted Bias Analysis
+Bias Detection Agent — Multi-Factor Bias Analysis
 
 Goes beyond simple score comparison by incorporating:
   1. Score Difference (core signal)
@@ -56,7 +56,7 @@ class BiasAgent:
         confidence_weight = self._compute_confidence_weight(ai_confidence)
         completeness_factor = self._compute_completeness_factor(answer_length)
 
-        # ── Weighted Bias Formula ─────────────────────────────────────────
+        # ── Bias Score Formula ─────────────────────────────────────────────
         # Raw bias as percentage of max score (10)
         raw_bias = (diff / 10.0) * 100
 

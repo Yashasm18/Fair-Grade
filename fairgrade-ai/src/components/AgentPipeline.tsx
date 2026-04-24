@@ -1,10 +1,17 @@
 import React from 'react';
 import { FileText, Shield, Sparkles, AlertTriangle, CheckCircle, Check } from 'lucide-react';
+import type { AgentPipelineProps } from '../types';
+
+interface AgentStep {
+  title: string;
+  desc: string;
+  icon: React.ReactNode;
+}
 
 /**
  * AgentPipeline — Shows the 5-agent processing steps with animations.
  */
-const steps = [
+const steps: AgentStep[] = [
   { title: "OCR Agent", desc: "Extracting text from image on secure server", icon: <FileText size={20} /> },
   { title: "Privacy Agent", desc: "Anonymizing personal identifiers", icon: <Shield size={20} /> },
   { title: "Evaluation Agent", desc: "Grading objectively with Gemini AI", icon: <Sparkles size={20} /> },
@@ -12,7 +19,7 @@ const steps = [
   { title: "Reporting Agent", desc: "Generating bias assessment", icon: <CheckCircle size={20} /> }
 ];
 
-const AgentPipeline = ({ currentStep, fileName }) => {
+const AgentPipeline: React.FC<AgentPipelineProps> = ({ currentStep, fileName }) => {
   return (
     <div className="glass-panel" style={{ marginBottom: "2rem" }}>
       <h2>Processing — {fileName}</h2>
