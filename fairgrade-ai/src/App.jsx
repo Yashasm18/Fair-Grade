@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { FileSearch, Download, PieChart, Home, FileType, Sparkles, Zap } from 'lucide-react';
-import { db } from "./config/firebase";
+import { auth, db } from "./config/firebase";
 import { collection, addDoc } from "firebase/firestore";
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
+import { LogIn, LogOut, ShieldCheck, UserCheck } from 'lucide-react';
 import Analytics from "./Analytics";
 import EvaluationSetup from "./components/EvaluationSetup";
 import AgentPipeline from "./components/AgentPipeline";
@@ -85,6 +87,30 @@ function App() {
   // ─── Navigation & Demo Mode ───
   const [activeTab, setActiveTab] = useState('evaluate');
   const [demoMode, setDemoMode] = useState(false);
+
+  // ─── Authentication State ───
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogin = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error("Login failed:", error);
+      setGlobalError("Google Login failed. Please try again.");
+    }
+  };
+
+  const handleLogout = () => signOut(auth);
 
   // ─── Evaluation State ───
   const [teacherScore, setTeacherScore] = useState('');
@@ -258,6 +284,8 @@ function App() {
             if (import.meta.env.VITE_FIREBASE_API_KEY) {
               await addDoc(collection(db, "evaluations"), {
                 student_identifier: studentIds[file.name] || 'N/A',
+                teacher_uid: user?.uid || 'anonymous',
+                teacher_email: user?.email || 'anonymous',
                 ai_score: data.evaluation.aiScore,
                 teacher_score: Number(teacherScore),
                 bias_status: data.bias.status,
@@ -339,6 +367,7 @@ function App() {
           if (import.meta.env.VITE_FIREBASE_API_KEY) {
             await addDoc(collection(db, 'verifications'), {
               fileName,
+              teacher_uid: user?.uid || 'anonymous',
               action: verifyData.action,
               finalScore: verifyData.finalScore,
               originalAiScore: verifyData.originalAiScore,
@@ -386,6 +415,15 @@ function App() {
           <p className="subtitle">Exposing hidden bias affecting millions of students to give schools actionable insights.</p>
         </div>
         <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+          {user && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginRight: '1rem', padding: '0.4rem 0.8rem', background: 'rgba(5, 150, 105, 0.05)', borderRadius: '8px', border: '1px solid rgba(5, 150, 105, 0.1)' }}>
+              <UserCheck size={14} color="#059669" />
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)' }}>{user.displayName?.split(' ')[0]}</span>
+              <button onClick={handleLogout} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', marginLeft: '0.5rem' }} title="Logout">
+                <LogOut size={14} />
+              </button>
+            </div>
+          )}
           <DarkModeToggle isDark={isDark} onToggle={() => setIsDark(!isDark)} />
           <button
             className={`nav-btn ${activeTab === 'evaluate' ? 'active' : ''}`}
@@ -404,7 +442,33 @@ function App() {
         </div>
       </header>
 
-      {/* ─── Demo Mode Banner ─── */}
+      {/* ─── Login Screen ─── */}
+      {!user && !authLoading && (
+        <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem 2rem', maxWidth: '500px', margin: '4rem auto' }}>
+          <div style={{ display: 'inline-flex', padding: '1rem', borderRadius: '20px', background: 'rgba(139, 92, 246, 0.1)', marginBottom: '1.5rem' }}>
+            <ShieldCheck size={48} color="var(--primary)" />
+          </div>
+          <h2 style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>Educator Portal</h2>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>
+            Sign in with your educational account to access the FairGrade AI pipeline and bias analytics dashboard.
+          </p>
+          <button 
+            onClick={handleLogin}
+            className="btn-primary" 
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem' }}
+          >
+            <LogIn size={20} /> Sign in with Google
+          </button>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '1.5rem' }}>
+            Secure authentication powered by Firebase Auth (Google OAuth 2.0)
+          </p>
+        </div>
+      )}
+
+      {/* ─── Main App (Only visible if logged in) ─── */}
+      {user && (
+        <>
+          {/* ─── Demo Mode Banner ─── */}
       {activeTab === 'evaluate' && !demoMode && results.length === 0 && !isProcessing && (
         <div className="demo-banner">
           <div className="demo-banner-content">
