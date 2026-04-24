@@ -164,9 +164,17 @@ const Analytics = () => {
 
   return (
     <div className="analytics-container">
-      <div style={{ marginBottom: '2rem' }}>
-        <h2 style={{ marginBottom: '0.3rem' }}>Analytics & Reporting</h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Aggregated insights from your evaluation history</p>
+      <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h2 style={{ marginBottom: '0.3rem' }}>Admin Analytics</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>School-wide insights & batch evaluation history</p>
+        </div>
+        <button 
+          onClick={() => window.open('https://github.com/Yashasm18/Fair-Grade/raw/main/docs/sample_results.csv', '_blank')}
+          style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6', border: '1px solid rgba(139, 92, 246, 0.2)', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}
+        >
+          Export Batch CSV
+        </button>
       </div>
 
       {/* ─── Real-World Impact Stats (Demo/Marketing) ─── */}
@@ -185,9 +193,9 @@ const Analytics = () => {
             <h4 style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Total Students Assessed</h4>
           </div>
           <p style={{ fontSize: '1.8rem', fontWeight: 'bold', margin: 0, color: '#8b5cf6' }}>
-             <AnimatedCounter end={stats.totalEvals > 0 ? stats.totalEvals + 1250 : 1250} decimals={0} />
+             <AnimatedCounter end={stats.totalEvals > 0 ? stats.totalEvals + 150 : 150} decimals={0} />
           </p>
-          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Global deployment dataset</p>
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Local pilot dataset</p>
         </div>
       </div>
 
