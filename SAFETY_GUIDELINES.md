@@ -42,6 +42,33 @@ Answer Sheet Image → OCR (in-memory) → PII Redaction → AI Evaluation → R
 - **No persistent image storage**: Uploaded answer sheet images are held in memory only during the evaluation request lifecycle.
 - **No server-side logging of student content**: API logs capture request metadata (timestamps, status codes) but **never** student answers, names, or scores.
 - **Firebase stores only aggregated metrics**: The Firestore database stores evaluation results (scores, bias percentages) but **not** the original answer sheet content or student identity information.
+- **Input validation**: The API enforces a **10 MB file size limit** and restricts uploads to images (PNG, JPEG, WebP, GIF) and PDFs only. Malformed or oversized files are rejected before entering the pipeline.
+
+### 1.4 Firestore Security Rules
+
+The following security rules are applied to the Cloud Firestore database to ensure data isolation:
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Evaluations: only authenticated users can read/write their own data
+    match /evaluations/{docId} {
+      allow create: if request.auth != null
+                    && request.resource.data.teacher_uid == request.auth.uid;
+      allow read:   if request.auth != null
+                    && resource.data.teacher_uid == request.auth.uid;
+      allow update, delete: if false; // Immutable audit trail
+    }
+    // Deny all other access by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+```
+
+> **Key principle**: Evaluations are **immutable** — once created, they cannot be edited or deleted, ensuring a tamper-proof audit trail.
 
 ---
 
@@ -74,7 +101,7 @@ The cornerstone of our Responsible AI approach:
 Our system is intentionally designed to be **non-confrontational**:
 
 - Results are framed as "grading inconsistencies," not "teacher errors"
-- The Bias Agent provides a mathematical comparison (`|Teacher Score − AI Score| / 10 × 100`), not a moral judgment
+- The Bias Agent provides a weighted mathematical comparison (Score Diff × Confidence Weight × Completeness Factor), not a moral judgment
 - Severity labels (Low / Medium / High) are based on **objective thresholds**, not subjective assessments
 - The analytics dashboard presents patterns **without attributing blame** to individual teachers
 

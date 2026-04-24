@@ -115,10 +115,20 @@ async def evaluate_answer(
     bias_info = {"severity": "Unknown", "status": "Unknown", "difference": 0,
                  "bias_score_percentage": 0.0, "formula_used": ""}
 
+    # ── Input Validation ───────────────────────────────────────────────
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+    ALLOWED_TYPES = {"image/png", "image/jpeg", "image/webp", "image/gif", "application/pdf"}
+
+    if file.content_type and file.content_type not in ALLOWED_TYPES:
+        raise HTTPException(status_code=400, detail=f"Unsupported file type: {file.content_type}. Allowed: images and PDFs.")
+
     try:
         file_bytes = await file.read()
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"File read failed: {exc}")
+
+    if len(file_bytes) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=413, detail=f"File too large ({len(file_bytes) / 1024 / 1024:.1f} MB). Maximum allowed: 10 MB.")
 
     # Agent 1: OCR (Google Gemini Vision API)
     try:
