@@ -11,10 +11,10 @@ import re
 _IDENTITY_PATTERNS = [
     # Header fields (Name, Roll No, etc.) - Match up to a comma, newline, or 40 chars max to prevent greedy matching deleting the whole text
     r'(?i)(Name\s*[:\-]?\s*)([A-Za-z\s]{2,40})(?:[\n,]|$)',
-    r'(?i)(Roll\s*No[\.:]?\s*[:\-]?\s*)([A-Z0-9\s]+)(?:[\n,]|$)',
-    r'(?i)(ID\s*Number\s*[:\-]?\s*)([A-Z0-9\s]+)(?:[\n,]|$)',
-    r'(?i)(Student\s*ID\s*[:\-]?\s*)([A-Z0-9\s]+)(?:[\n,]|$)',
-    r'(?i)(Batch\s*[:\-]?\s*)([A-Z0-9\s]+)(?:[\n,]|$)',
+    r'(?i)(Roll\s*No[\.:]?\s*[:\-]?\s*)([A-Za-z0-9\s\-\.]+)(?:[\n,]|$)',
+    r'(?i)(ID\s*Number\s*[:\-]?\s*)([A-Za-z0-9\s\-\.]+)(?:[\n,]|$)',
+    r'(?i)(Student\s*ID\s*[:\-]?\s*)([A-Za-z0-9\s\-\.]+)(?:[\n,]|$)',
+    r'(?i)(Batch\s*[:\-]?\s*)([A-Za-z0-9\s\-\.]+)(?:[\n,]|$)',
     
     # Inline natural language statements
     r'(?i)(my\s+name\s+is\s+)([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})',
