@@ -80,10 +80,17 @@ To ensure the accuracy of our impact metrics, we conducted a three-phase validat
 ### How Bias Is Calculated
 
 ```
-Bias Score (%) = (|Teacher Score − AI Score| / 10) × 100
+Weighted Bias Score (%) = Raw Bias × Confidence Weight × Completeness Factor
+
+Where:
+  Raw Bias         = (|Teacher Score − AI Score| / 10) × 100
+  Confidence Weight = 0.5 + (AI Confidence × 0.7)        → Range: 0.50 – 1.20
+  Completeness Factor = f(answer length)                  → Range: 0.60 – 1.10
 ```
 
-If the Bias Score > 30%, the system flags it as **High Risk** — prompting a teacher review via our **Human-in-the-Loop** verification flow.
+> **Why weighted?** A simple score difference doesn't account for *how sure* the AI was, or *how much* the student wrote. If the AI had low confidence (e.g., 30%), the bias signal is discounted — the AI itself is uncertain. If the student wrote only a few words, the AI lacked context, so bias is further reduced. This prevents false positives and produces **research-grade** bias detection.
+
+If the Weighted Bias Score > 30%, the system flags it as **High Risk** — prompting a teacher review via our **Human-in-the-Loop** verification flow.
 
 ---
 

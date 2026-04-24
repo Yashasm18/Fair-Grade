@@ -139,7 +139,12 @@ async def evaluate_answer(
 
     # Agent 4: Bias Detection
     try:
-        bias_info = bias_agent.detect_bias(teacher_score, evaluation["score"])
+        bias_info = bias_agent.detect_bias(
+            teacher_score,
+            evaluation["score"],
+            ai_confidence=evaluation.get("confidence", 1.0),
+            answer_length=len(clean_text),
+        )
     except Exception as exc:
         pipeline_errors.append({"agent": "Bias Agent", "error": str(exc)})
 
