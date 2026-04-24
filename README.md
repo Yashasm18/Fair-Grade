@@ -67,6 +67,7 @@ This project directly addresses **[UN SDG 4: Quality Education](https://sdgs.un.
 | **AI evaluation confidence** | **92%** average confidence score | Gemini's self-reported confidence per evaluation |
 | **Students assessed (Pilot Program)** | **150+** answer sheets processed | Aggregated data from Local School Pilots and a simulated batch stress test. |
 
+> *📊 Results derived from controlled simulation + small-scale educator validation dataset.*
 ### 🔍 Methodology & Data Sources
 To ensure the accuracy of our impact metrics, we conducted a three-phase validation:
 1. **Local Pilot**: 54 manual evaluations conducted with three local educators across Mathematics and Science subjects to calibrate the Bias Agent.
