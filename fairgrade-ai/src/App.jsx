@@ -412,7 +412,7 @@ function App() {
           <p className="subtitle">Exposing hidden bias affecting millions of students to give schools actionable insights.</p>
         </div>
         <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
-          {user ? (
+          {user && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginRight: '1rem', padding: '0.4rem 0.8rem', background: 'rgba(5, 150, 105, 0.05)', borderRadius: '8px', border: '1px solid rgba(5, 150, 105, 0.1)' }}>
               <UserCheck size={14} color="#059669" />
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)' }}>{user.displayName?.split(' ')[0]}</span>
@@ -420,14 +420,6 @@ function App() {
                 <LogOut size={14} />
               </button>
             </div>
-          ) : (
-             <button 
-                onClick={handleLogin}
-                className="btn-primary" 
-                style={{ marginRight: '1rem', padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-              >
-                <LogIn size={14} /> Educator Login
-              </button>
           )}
           <DarkModeToggle isDark={isDark} onToggle={() => setIsDark(!isDark)} />
           <button
@@ -447,9 +439,33 @@ function App() {
         </div>
       </header>
 
-      {/* ─── Main App (Unlocked for Demo Purposes) ─── */}
-      <>
-        {/* ─── Demo Mode Banner ─── */}
+      {/* ─── Login Screen ─── */}
+      {!user && (
+        <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem 2rem', maxWidth: '500px', margin: '4rem auto' }}>
+          <div style={{ display: 'inline-flex', padding: '1rem', borderRadius: '20px', background: 'rgba(139, 92, 246, 0.1)', marginBottom: '1.5rem' }}>
+            <ShieldCheck size={48} color="var(--primary)" />
+          </div>
+          <h2 style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>Educator Portal</h2>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>
+            Sign in with your educational account to access the FairGrade AI pipeline and bias analytics dashboard.
+          </p>
+          <button 
+            onClick={handleLogin}
+            className="btn-primary" 
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', width: '100%' }}
+          >
+            <LogIn size={20} /> Sign in with Google
+          </button>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '1.5rem' }}>
+            Secure authentication powered by Firebase Auth (Google OAuth 2.0)
+          </p>
+        </div>
+      )}
+
+      {/* ─── Main App (Only visible if logged in) ─── */}
+      {user && (
+        <>
+          {/* ─── Demo Mode Banner ─── */}
       {activeTab === 'evaluate' && !demoMode && results.length === 0 && !isProcessing && (
         <div className="demo-banner">
           <div className="demo-banner-content">
@@ -545,6 +561,7 @@ function App() {
         </div>
       )}
       </>
+      )}
 
       {/* ─── Footer ─── */}
       <Footer />
