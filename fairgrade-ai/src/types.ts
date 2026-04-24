@@ -72,7 +72,7 @@ export interface AgentPipelineProps {
   fileName: string;
 }
 
-export interface FooterProps {}
+export type FooterProps = Record<string, never>;
 
 export interface ResultCardProps {
   result: FileResult;
