@@ -89,6 +89,7 @@ function App() {
 
   // ─── Authentication State ───
   const [user, setUser] = useState(null);
+  const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -440,7 +441,7 @@ function App() {
       </header>
 
       {/* ─── Login Screen ─── */}
-      {!user && (
+      {!user && !isGuest && (
         <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem 2rem', maxWidth: '500px', margin: '4rem auto' }}>
           <div style={{ display: 'inline-flex', padding: '1rem', borderRadius: '20px', background: 'rgba(139, 92, 246, 0.1)', marginBottom: '1.5rem' }}>
             <ShieldCheck size={48} color="var(--primary)" />
@@ -449,21 +450,37 @@ function App() {
           <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>
             Sign in with your educational account to access the FairGrade AI pipeline and bias analytics dashboard.
           </p>
-          <button 
-            onClick={handleLogin}
-            className="btn-primary" 
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', width: '100%' }}
-          >
-            <LogIn size={20} /> Sign in with Google
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <button 
+              onClick={handleLogin}
+              className="btn-primary" 
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', width: '100%' }}
+            >
+              <LogIn size={20} /> Sign in with Google
+            </button>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '0.5rem 0' }}>
+              <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>or</span>
+              <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
+            </div>
+
+            <button 
+              onClick={() => setIsGuest(true)}
+              className="btn-primary" 
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', width: '100%', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-main)' }}
+            >
+              <Zap size={20} /> Try the Demo (Guest Mode)
+            </button>
+          </div>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '1.5rem' }}>
             Secure authentication powered by Firebase Auth (Google OAuth 2.0)
           </p>
         </div>
       )}
 
-      {/* ─── Main App (Only visible if logged in) ─── */}
-      {user && (
+      {/* ─── Main App (Visible if logged in or guest mode) ─── */}
+      {(user || isGuest) && (
         <>
           {/* ─── Demo Mode Banner ─── */}
       {activeTab === 'evaluate' && !demoMode && results.length === 0 && !isProcessing && (
