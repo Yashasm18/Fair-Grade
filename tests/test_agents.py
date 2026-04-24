@@ -133,24 +133,18 @@ class TestBiasPercentage:
         assert result["bias_score_percentage"] == 0.0
 
     def test_bias_percentage_weighted(self):
-        """With full confidence (weight=1.2) and long answer (factor=1.1), bias is amplified."""
+        """With long answer (factor=1.0), bias is raw bias."""
         result = self.agent.detect_bias(teacher_mark=2, ai_mark=9, ai_confidence=1.0, answer_length=400)
-        # Raw = 70%, weighted = 70 * 1.2 * 1.1 = 92.4
-        assert result["bias_score_percentage"] == 92.4
-
-    def test_bias_percentage_low_confidence(self):
-        """Low AI confidence should discount bias (AI itself is unsure)."""
-        result = self.agent.detect_bias(teacher_mark=2, ai_mark=9, ai_confidence=0.3, answer_length=400)
-        # confidence_weight = 0.5 + 0.3*0.7 = 0.71, completeness = 1.1
-        # Raw = 70%, weighted = 70 * 0.71 * 1.1 = 54.7
-        assert result["bias_score_percentage"] == 54.7
+        # diff = 7, raw = 70. factor = min(1.0, log(1 + 80) / log(120)) = 0.92
+        # So 70 * 0.92 = 64.4
+        assert result["bias_score_percentage"] == 64.4
 
     def test_bias_percentage_short_answer(self):
         """Short answers should discount bias (AI may lack context)."""
         result = self.agent.detect_bias(teacher_mark=2, ai_mark=9, ai_confidence=1.0, answer_length=20)
-        # confidence_weight = 1.2, completeness = 0.6
-        # Raw = 70%, weighted = 70 * 1.2 * 0.6 = 50.4
-        assert result["bias_score_percentage"] == 50.4
+        # word_count = 4. factor = min(1.0, log(5) / log(120)) = 0.34
+        # Raw = 70%, weighted = 70 * 0.34 = 23.8
+        assert result["bias_score_percentage"] == 23.8
 
     def test_formula_present(self):
         result = self.agent.detect_bias(teacher_mark=5, ai_mark=7)

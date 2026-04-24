@@ -78,18 +78,16 @@ To ensure the accuracy of our impact metrics, we conducted a three-phase validat
 ### How Bias Is Calculated
 
 
-Bias Score (%) = min(100, (|Teacher Score − AI Score| / 10) × 100 × Confidence Weight × Completeness Factor)
-
-Where:
-
-Confidence Weight = 1.0 + (AI Confidence − 0.5) × 0.4    (range: 0.8 – 1.2)
+Bias Score (%) = min(100, |Teacher Score − AI Score| × 10)
 
 Completeness Factor = min(1.0, log(1 + word_count) / log(120))
 
-We use a normalized absolute difference between Teacher Score and AI Score, weighted by AI Confidence and answer completeness, to detect grading inconsistencies.
+Final Bias Score = Bias Score × Completeness Factor
 
-- **Confidence Weight** amplifies bias when the AI is highly confident (making disagreements more significant) and dampens it when confidence is low.
-- **Completeness Factor** reduces bias impact for very short answers where the AI has limited context.
+We use a normalized absolute difference between Teacher Score and AI Score to detect grading inconsistencies.
+
+- **Completeness Factor** reduces bias impact for very short answers where the AI has limited context. Longer, more complete answers produce a more reliable signal.
+- AI Confidence is stored for reference but **not used in scoring** — keeping the formula clean, explainable, and reproducible.
 
 If the Bias Score > 30%, the system flags it as **High Risk** — prompting a teacher review via our **Human-in-the-Loop** verification flow.
 

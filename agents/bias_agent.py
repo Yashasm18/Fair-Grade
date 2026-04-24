@@ -1,26 +1,24 @@
 """
-Bias Detection Agent — Multi-Factor Bias Analysis
+Bias Detection Agent — Score Comparison with Completeness Adjustment
 
-Goes beyond simple score comparison by incorporating:
-  1. Score Difference (core signal)
-  2. AI Confidence Weight (Gemini's self-reported certainty)
-  3. Answer Completeness Factor (text length as proxy for effort)
+Calculates a clean, explainable bias score:
+  1. Bias Score (%) = min(100, |Teacher − AI| × 10)
+  2. Completeness Factor = min(1.0, log(1 + word_count) / log(120))
+  3. Final Bias Score = Bias Score × Completeness Factor
 
-This produces a nuanced bias score that accounts for HOW confident
-the AI was and HOW much the student actually wrote.
+This produces a fair, transparent bias metric that adjusts for
+how much the student actually wrote.
 """
+
+import math
 
 
 class BiasAgent:
-    """Agent 4 — Detects grading bias using a weighted multi-factor algorithm."""
+    """Agent 4 — Detects grading bias using score difference and completeness adjustment."""
 
     # Thresholds for bias severity classification
     HIGH_BIAS_THRESHOLD = 3.0
     MEDIUM_BIAS_THRESHOLD = 1.0
-
-    # Answer completeness thresholds (character count)
-    SHORT_ANSWER_THRESHOLD = 50
-    LONG_ANSWER_THRESHOLD = 300
 
     def detect_bias(
         self,
@@ -30,12 +28,12 @@ class BiasAgent:
         answer_length: int = 200,
     ) -> dict:
         """
-        Detect and classify grading inconsistency using weighted multi-factor analysis.
+        Detect and classify grading inconsistency.
 
         Args:
             teacher_mark: Score assigned by the human teacher (0–10).
             ai_mark: Score assigned by the AI evaluation agent (0–10).
-            ai_confidence: AI's self-reported confidence (0.0–1.0).
+            ai_confidence: AI's self-reported confidence (0.0–1.0). Stored but not used in scoring.
             answer_length: Character count of the student's answer text.
 
         Returns:
@@ -43,8 +41,7 @@ class BiasAgent:
                 - 'status': 'Undergraded' | 'Overgraded' | 'Fair'
                 - 'severity': 'High' | 'Medium' | 'Low'
                 - 'difference': absolute score gap (float)
-                - 'bias_score_percentage': weighted bias severity as a percentage (float)
-                - 'confidence_weight': multiplier from AI confidence (float)
+                - 'bias_score_percentage': final bias severity as a percentage (float)
                 - 'completeness_factor': multiplier from answer length (float)
                 - 'formula_used': string explaining the logic
         """
@@ -52,21 +49,19 @@ class BiasAgent:
         severity = self._classify_severity(diff)
         status = self._classify_status(teacher_mark, ai_mark)
 
-        # ── Multi-Factor Weights ──────────────────────────────────────────
-        confidence_weight = self._compute_confidence_weight(ai_confidence)
+        # ── Completeness Factor ───────────────────────────────────────────
         completeness_factor = self._compute_completeness_factor(answer_length)
 
-        # ── Bias Score Formula ─────────────────────────────────────────────
-        # Raw bias as percentage of max score (10)
-        raw_bias = (diff / 10.0) * 100
+        # ── Bias Score Formula ────────────────────────────────────────────
+        # Raw bias: simple percentage of max score difference
+        raw_bias = min(100.0, diff * 10)
 
-        # Apply weights: high-confidence AI + complete answers = more trustworthy signal
-        weighted_bias = raw_bias * confidence_weight * completeness_factor
-        weighted_bias = min(round(weighted_bias, 1), 100.0)
+        # Apply completeness adjustment
+        final_bias = raw_bias * completeness_factor
+        final_bias = min(round(final_bias, 1), 100.0)
 
         formula = (
-            "Bias Score (%) = (|Teacher − AI| / 10) × 100 "
-            f"× Confidence Weight ({confidence_weight}) "
+            f"Bias Score (%) = min(100, |{teacher_mark} − {ai_mark}| × 10) "
             f"× Completeness Factor ({completeness_factor})"
         )
 
@@ -74,8 +69,7 @@ class BiasAgent:
             "severity": severity,
             "status": status,
             "difference": diff,
-            "bias_score_percentage": weighted_bias,
-            "confidence_weight": confidence_weight,
+            "bias_score_percentage": final_bias,
             "completeness_factor": completeness_factor,
             "formula_used": formula,
         }
@@ -98,27 +92,15 @@ class BiasAgent:
             return "Overgraded"
         return "Fair"
 
-    def _compute_confidence_weight(self, confidence: float) -> float:
-        """
-        Higher AI confidence → stronger bias signal.
-        Low confidence → discount the bias (AI itself is unsure).
-
-        Maps 0.0–1.0 confidence to a 0.5–1.2 weight range.
-        """
-        confidence = max(0.0, min(1.0, confidence))
-        return round(0.5 + (confidence * 0.7), 2)
-
     def _compute_completeness_factor(self, char_count: int) -> float:
         """
-        Longer, more complete answers provide a more reliable evaluation signal.
-        Very short answers (< 50 chars) → discount bias (AI may lack context).
-        Medium answers (50-300 chars) → neutral weight.
-        Long answers (> 300 chars) → slight boost (more data for AI).
+        Completeness Factor = min(1.0, log(1 + word_count) / log(120))
 
-        Maps to a 0.6–1.1 weight range.
+        Longer answers provide a more reliable evaluation signal.
+        Very short answers → discount bias (AI may lack context).
+        Uses logarithmic scaling for a smooth, fair curve.
         """
-        if char_count < self.SHORT_ANSWER_THRESHOLD:
-            return 0.6
-        if char_count < self.LONG_ANSWER_THRESHOLD:
-            return 0.9
-        return 1.1
+        # Approximate word count from character count (~5 chars per word)
+        word_count = max(1, char_count // 5)
+        factor = math.log(1 + word_count) / math.log(120)
+        return round(min(1.0, factor), 2)

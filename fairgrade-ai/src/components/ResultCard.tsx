@@ -184,9 +184,9 @@ const ResultCard: React.FC<ResultCardProps> = ({ result, studentId, onRetry, onV
               {report.bias.biasScorePercentage !== undefined && (
                 <div style={{ marginTop: '0.4rem', fontSize: '0.7rem', color: 'var(--text-muted)' }} title={report.bias.formulaUsed}>
                   Bias Score: <strong style={{ color: 'var(--text-main)' }}>{report.bias.biasScorePercentage}%</strong>
-                  {report.bias.confidenceWeight && (
+                  {report.bias.completenessFactor && (
                     <div style={{ marginTop: '0.2rem', fontSize: '0.65rem', opacity: 0.8 }}>
-                      CW: {report.bias.confidenceWeight} · CF: {report.bias.completenessFactor}
+                      Completeness Factor: {report.bias.completenessFactor}
                     </div>
                   )}
                 </div>

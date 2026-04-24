@@ -17,7 +17,6 @@ export interface BiasResult {
   status: "Fair" | "Undergraded" | "Overgraded";
   gap: number;
   biasScorePercentage?: number;
-  confidenceWeight?: number;
   completenessFactor?: number;
   formulaUsed?: string;
 }
