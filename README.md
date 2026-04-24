@@ -33,14 +33,6 @@
 
 ---
 
-## 🎬 Demo Video
-
-> **📺 [Watch our 2-minute demo on YouTube →](https://youtu.be/YOUR_VIDEO_ID)**
->
-> *See FairGrade AI in action: uploading answer sheets, AI-powered bias detection, teacher override flow, and the analytics dashboard.*
-
----
-
 ## 📌 The Problem
 
 > Research shows that **implicit bias** in grading affects millions of students worldwide. Factors such as a student's name, gender, or handwriting style can unconsciously influence a teacher's score — even among well-intentioned educators.
