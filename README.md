@@ -118,37 +118,36 @@ FairGrade AI uses a **5-agent pipeline** where each agent has a single responsib
 
 ```mermaid
 graph TD
-    classDef frontend fill:#3b82f6,stroke:#1d4ed8,stroke-width:2px,color:#fff;
-    classDef backend fill:#10b981,stroke:#047857,stroke-width:2px,color:#fff;
-    classDef agents fill:#f59e0b,stroke:#b45309,stroke-width:2px,color:#fff;
-    classDef database fill:#ec4899,stroke:#be185d,stroke-width:2px,color:#fff;
-    classDef hitl fill:#059669,stroke:#047857,stroke-width:2px,color:#fff;
+    A[Teacher uploads Answer Sheet + Rubric] --> |POST /api/evaluate| C[API Gateway - FastAPI]
 
-    A["Teacher uploads Answer Sheet + Rubric"]:::frontend
-    B["Analytics Dashboard"]:::frontend
-    C["API Gateway (FastAPI)"]:::backend
-
-        subgraph "AI Agent Pipeline"
-        D["1. OCR Agent (Gemini Vision)"]:::agents
-        E["2. Privacy Agent (PII Redaction)"]:::agents
-        F["3. Evaluation Agent (Gemini AI)"]:::agents
-        G["4. Bias Agent (Algorithm)"]:::agents
-        H["5. Reporting Agent"]:::agents
+    subgraph AI Agent Pipeline
+        D[1. OCR Agent - Gemini Vision]
+        E[2. Privacy Agent - PII Redaction]
+        F[3. Evaluation Agent - Gemini AI]
+        G[4. Bias Agent - Algorithm]
+        H[5. Reporting Agent]
     end
 
-        I[(Firebase Firestore)]:::database
-    J["Teacher Verifies: Accept / Override"]:::hitl
-
-    A -->|"POST /api/evaluate"| C
     C --> D
-    D -->|"Raw Text"| E
-    E -->|"Anonymized Text"| F
-    F -->|"AI Score + Reasoning"| G
-    G -->|"Bias Report"| H
-    H -->|"JSON Response"| B
-    B -->|"Review Results"| J
-    J -->|"POST /api/verify"| C
-    C -->|"Saves Metrics"| I
+    D --> |Raw Text| E
+    E --> |Anonymized Text| F
+    F --> |AI Score + Reasoning| G
+    G --> |Bias Report| H
+    H --> |JSON Response| B[Analytics Dashboard]
+    B --> |Review Results| J[Teacher Verifies - Accept or Override]
+    J --> |POST /api/verify| C
+    C --> |Saves Metrics| I[Firebase Firestore]
+
+    style A fill:#3b82f6,stroke:#1d4ed8,color:#fff
+    style B fill:#3b82f6,stroke:#1d4ed8,color:#fff
+    style C fill:#10b981,stroke:#047857,color:#fff
+    style D fill:#f59e0b,stroke:#b45309,color:#fff
+    style E fill:#f59e0b,stroke:#b45309,color:#fff
+    style F fill:#f59e0b,stroke:#b45309,color:#fff
+    style G fill:#f59e0b,stroke:#b45309,color:#fff
+    style H fill:#f59e0b,stroke:#b45309,color:#fff
+    style I fill:#ec4899,stroke:#be185d,color:#fff
+    style J fill:#059669,stroke:#047857,color:#fff
 ```
 
 ### Key Design Decisions
