@@ -4,6 +4,8 @@ FairGrade AI ensures fair evaluation by removing identity bias and using AI to d
 
 ## New Features
 - **Explainable AI**: Returns an explicit Confidence Score and transparent custom Bias Percentage formulas.
+- **Google OAuth 2.0**: Secure Educator Portal powered by Firebase Auth to protect sensitive dashboards.
+- **Immutable Audit Trails**: Every teacher evaluation override is cryptographically tied to their verified User ID.
 - **Impact Analytics**: Tracks real-world measurable impact with "Overall Bias Reduction" metrics and a visual Scatter Plot mapping of discrepancies.
 - **Question Context**: Teachers can now paste the question and model answer to guide the AI for more accurate grading.
 - **Batch Processing**: Supports uploading multiple answer sheets at once. The system will process them sequentially.
