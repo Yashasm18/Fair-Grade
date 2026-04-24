@@ -285,7 +285,8 @@ Fair-Grade/
 
 | Name | Role | GitHub |
 |------|------|--------|
-| **Yashas M** | Full-Stack & AI Engineer | [@Yashasm18](https://github.com/Yashasm18) |
+| **Yashas M** | Vibecoder & AI Engineer | [@Yashasm18](https://github.com/Yashasm18) |
+| **Sahana NS** | AI Integration & Backend Engineer | [@sahana-ns14](https://github.com/sahana-ns14) |
 
 > *Team VEKTOR — building technology for equitable education.*
 
