@@ -27,6 +27,8 @@
   <a href="#-team-vektor">Team</a>
 </p>
 
+> **🧑‍⚖️ Note for Judges:** To experience the platform seamlessly without authenticating, simply click **"Try the Demo (Guest Mode)"** on the login screen. The full UI will unlock instantly.
+> 
 > **⚠️ Cold Start Notice:** The backend is hosted on Render's free tier, which spins down after 15 minutes of inactivity. If the demo feels slow on first load, please allow ~30 seconds for the backend to wake up before trying again.
 
 ---
