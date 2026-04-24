@@ -17,7 +17,7 @@ test.describe('FairGrade AI — Login & Navigation', () => {
     await page.getByText('Try the Demo (Guest Mode)').click();
     
     // Should show evaluation UI elements
-    await expect(page.getByText('FairGrade AI')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'FairGrade AI', exact: true })).toBeVisible();
     await expect(page.locator('button').filter({ hasText: 'Evaluate' })).toBeVisible();
     await expect(page.locator('button').filter({ hasText: 'Analytics' })).toBeVisible();
   });
@@ -37,7 +37,7 @@ test.describe('FairGrade AI — Login & Navigation', () => {
     
     // Click Analytics tab
     await page.locator('button').filter({ hasText: 'Analytics' }).click();
-    await expect(page.getByText('Analytics & Reporting')).toBeVisible();
+    await expect(page.getByText('Admin Analytics')).toBeVisible();
     
     // Click back to Evaluate tab
     await page.locator('button').filter({ hasText: 'Evaluate' }).click();
@@ -124,13 +124,13 @@ test.describe('FairGrade AI — Evaluation Setup', () => {
     await expect(page.getByText(/Drag & drop images/)).toBeVisible();
   });
 
-  test('should show error when running pipeline without files', async ({ page }) => {
+  test('should disable run button when no files are uploaded', async ({ page }) => {
     // Set a valid score
     await page.getByLabel('Teacher score out of 10').fill('7');
     
-    // Click run — should show error since no files uploaded
-    await page.getByText('Run Agent Pipeline').click();
-    await expect(page.getByText('Please upload at least one answer sheet.')).toBeVisible();
+    // The button should be disabled because no files are uploaded
+    const runButton = page.getByLabel('Run agent evaluation pipeline');
+    await expect(runButton).toBeDisabled();
   });
 
   test('should disable run button when score is empty', async ({ page }) => {
