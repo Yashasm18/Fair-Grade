@@ -128,7 +128,7 @@ graph TD
     B["Analytics Dashboard"]:::frontend
     C["API Gateway (FastAPI)"]:::backend
 
-    subgraph pipeline ["AI Agent Pipeline (Google Gemini)"]
+        subgraph "AI Agent Pipeline"
         D["1. OCR Agent (Gemini Vision)"]:::agents
         E["2. Privacy Agent (PII Redaction)"]:::agents
         F["3. Evaluation Agent (Gemini AI)"]:::agents
@@ -136,7 +136,7 @@ graph TD
         H["5. Reporting Agent"]:::agents
     end
 
-    I[("Firebase Firestore")]:::database
+        I[(Firebase Firestore)]:::database
     J["Teacher Verifies: Accept / Override"]:::hitl
 
     A -->|"POST /api/evaluate"| C
