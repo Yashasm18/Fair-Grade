@@ -58,7 +58,7 @@ class TestBiasAgent:
     def test_fair_grade_same_score(self):
         result = self.agent.detect_bias(teacher_mark=8, ai_mark=8)
         assert result["status"] == "Fair"
-        assert result["severity"] == "Low"
+        assert result["severity"] == "Low Risk"
         assert result["difference"] == 0
 
     def test_fair_grade_within_threshold(self):
@@ -68,16 +68,16 @@ class TestBiasAgent:
     def test_undergraded(self):
         result = self.agent.detect_bias(teacher_mark=4, ai_mark=8)
         assert result["status"] == "Undergraded"
-        assert result["severity"] == "High"
+        assert result["severity"] == "High Risk"
 
     def test_overgraded(self):
         result = self.agent.detect_bias(teacher_mark=9, ai_mark=5)
         assert result["status"] == "Overgraded"
-        assert result["severity"] == "High"
+        assert result["severity"] == "High Risk"
 
     def test_medium_severity(self):
         result = self.agent.detect_bias(teacher_mark=5, ai_mark=7.5)
-        assert result["severity"] == "Medium"
+        assert result["severity"] == "Medium Risk"
 
     def test_difference_is_absolute(self):
         r1 = self.agent.detect_bias(teacher_mark=3, ai_mark=8)
@@ -98,7 +98,7 @@ class TestReportingAgent:
             extracted_text="Name: Alice\nAnswer text",
             clean_text="Name: [REDACTED]\nAnswer text",
             evaluation={"score": 7, "explanation": "Good explanation of concepts."},
-            bias_info={"severity": "Low", "status": "Fair", "difference": 0.5},
+            bias_info={"severity": "Low Risk", "status": "Fair", "difference": 0.5},
             teacher_score=7.5,
         )
         assert "originalTextLength" in report
@@ -113,7 +113,7 @@ class TestReportingAgent:
             extracted_text=text,
             clean_text="Name: [REDACTED]\nAnswer content here",
             evaluation={"score": 6, "explanation": "Partial answer."},
-            bias_info={"severity": "Medium", "status": "Undergraded", "difference": 2},
+            bias_info={"severity": "Medium Risk", "status": "Undergraded", "difference": 2},
             teacher_score=4,
         )
         assert report["originalTextLength"] == len(text)
@@ -165,7 +165,7 @@ class TestReportingConfidence:
             extracted_text="Answer text",
             clean_text="Answer text",
             evaluation={"score": 8, "explanation": "Good.", "confidence": 0.95},
-            bias_info={"severity": "Low", "status": "Fair", "difference": 0.5,
+            bias_info={"severity": "Low Risk", "status": "Fair", "difference": 0.5,
                         "bias_score_percentage": 5.0, "formula_used": "test"},
             teacher_score=7.5,
         )
@@ -176,7 +176,7 @@ class TestReportingConfidence:
             extracted_text="Answer text",
             clean_text="Answer text",
             evaluation={"score": 5, "explanation": "Partial.", "confidence": 0.7},
-            bias_info={"severity": "High", "status": "Undergraded", "difference": 4,
+            bias_info={"severity": "High Risk", "status": "Undergraded", "difference": 4,
                         "bias_score_percentage": 40.0, "formula_used": "test"},
             teacher_score=1,
         )
