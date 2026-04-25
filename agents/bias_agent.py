@@ -86,10 +86,10 @@ class BiasAgent:
     def _classify_severity(self, final_bias: float) -> str:
         """Classify risk based on final bias percentage."""
         if final_bias > self.HIGH_RISK_THRESHOLD:
-            return "High"
+            return "High Risk"
         if final_bias > self.MEDIUM_RISK_THRESHOLD:
-            return "Medium"
-        return "Low"
+            return "Medium Risk"
+        return "Low Risk"
 
     def _classify_status(self, teacher_mark: float, ai_mark: float) -> str:
         """Classify status based on raw mark difference."""
