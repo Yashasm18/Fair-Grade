@@ -304,6 +304,8 @@ Fair-Grade/
 |------|------|--------|
 | **Yashas M** | Vibecoder & AI Engineer | [@Yashasm18](https://github.com/Yashasm18) |
 | **Sahana NS** | AI Integration & Backend Engineer | [@sahana-ns14](https://github.com/sahana-ns14) |
+| **Vishnu R** | QA Testing & User Feedback | [@vishnhr90190-droid](https://github.com/vishnhr90190-droid) |
+| **Samhitha P** | Frontend Developer & Documentation | [@Samhithapjain](https://github.com/Samhithapjain) |
 
 > *Team VEKTOR — building technology for equitable education.*
 
