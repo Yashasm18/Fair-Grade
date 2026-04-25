@@ -145,7 +145,7 @@ class EvaluationAgent:
                 print(f"[EVAL] ✓ Success with {model_name}")
                 return {
                     "score": data.get("score", 0), 
-                    "explanation": data.get("explanation", ""),
+                    "explanation": f"[v2.1-CoT] {data.get('explanation', '')}",
                     "confidence": data.get("confidence", 1.0)
                 }
 
