@@ -39,42 +39,36 @@ def _extract_retry_delay(err: str) -> Optional[float]:
 
 
 def _build_prompt(text: str, question_context: Optional[str]) -> str:
-    context_block = (
-        f"QUESTION AND EXPECTED ANSWER CONTEXT:\n{question_context}\n\n"
-        if question_context
-        else ""
-    )
-    context_instruction = (
-        "Use the provided question and model answer context as the source of truth."
-        if question_context
-        else ""
-    )
-    return f"""You are an expert, objective AI grader. Grade the following student answer. {context_instruction}
+    return f"""You are an expert, strict AI grader evaluating a student's handwritten answer that has been extracted via OCR.
 
-CRITICAL INSTRUCTIONS:
-- Completely ignore grammar, handwriting, formatting, or language style.
-- Focus ONLY on factual correctness and depth of understanding.
-- You MUST use the FULL scoring range. DO NOT default to 0 or 10.
-- Use half-point increments (e.g., 3.5, 6.5, 7.5) when appropriate.
-- STRICT RULE: If the text is just metadata (dates, names, "Question and answer"), a cover page, irrelevant, or does not contain an actual attempt to answer the question, you MUST score it exactly 0.
+CRITICAL ANTI-HALLUCINATION INSTRUCTIONS:
+1. You are evaluating ONLY the text inside the <STUDENT_ANSWER> tags.
+2. DO NOT grade the context or the question itself.
+3. DO NOT hallucinate, invent, or assume facts. If the <STUDENT_ANSWER> does not explicitly contain the correct information, you MUST score it a 0.
+4. If the <STUDENT_ANSWER> is just metadata (dates, names, "papergrid"), gibberish, or simply repeats the question, you MUST score it a 0.
+5. Completely ignore grammar, handwriting, and formatting.
 
-SCORING RUBRIC (you MUST follow this):
-  10:   Perfect — Flawless, deep understanding, no missing details. (RARE)
-  8-9:  Excellent — Mostly correct with very minor gaps.
-  5-7:  Adequate — Partially correct, demonstrates basic understanding but misses key points.
-  2-4:  Below Average — Significant gaps, barely touches on the correct topic.
-  1:    Poor — Completely incorrect attempt at an answer.
-  0:    No Answer — Blank, strictly metadata (dates/headers), off-topic, or gibberish.
+GRADING RUBRIC (0 to 10):
+- 10: Flawless, deep understanding. (EXTREMELY RARE)
+- 8-9: Mostly correct, minor gaps.
+- 5-7: Partially correct, basic understanding.
+- 2-4: Significant gaps.
+- 1: Completely incorrect attempt.
+- 0: Strictly metadata, off-topic, gibberish, or empty. 
+Note: Use decimals (e.g., 4.5, 7.5) for nuanced scoring.
 
-IMPORTANT: A score of exactly 10 should be extremely RARE and reserved only for perfect, comprehensive answers. Evaluate genuinely.
+<QUESTION_AND_CONTEXT>
+{question_context if question_context else "No specific context provided. Grade based on general factual correctness."}
+</QUESTION_AND_CONTEXT>
 
-{context_block}STUDENT ANSWER:
+<STUDENT_ANSWER>
 {text}
+</STUDENT_ANSWER>
 
 Respond in valid JSON with exactly three keys:
-- "score": a number from 0 to 10 (use decimals like 6.5, 7.5 for nuance)
-- "explanation": a concise explanation referencing specific parts of the answer
-- "confidence": a number from 0.0 to 1.0 representing your confidence in this evaluation
+- "score": a number from 0 to 10
+- "explanation": a concise explanation referencing specific parts of the <STUDENT_ANSWER>. If the answer is just dates/junk, state that clearly.
+- "confidence": a number from 0.0 to 1.0
 """
 
 
