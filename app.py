@@ -16,6 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 from dotenv import load_dotenv
+import gc
 
 # ---------------------------------------------------------------------------
 # Rate Limiting (slowapi)
@@ -214,6 +215,13 @@ async def evaluate_answer(
     if pipeline_errors:
         report["pipelineWarnings"] = pipeline_errors
     report["verified"] = False
+
+    # ── Memory Cleanup ─────────────────────────────────────────────────
+    del file_bytes
+    del extracted_text
+    del clean_text
+    gc.collect()
+
     return report
 
 

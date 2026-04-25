@@ -82,6 +82,9 @@ class OCRAgent:
             print("[OCR] PyMuPDF not installed — cannot convert PDF to image.")
         except Exception as exc:
             print(f"[OCR] PDF conversion failed: {exc}")
+        
+        import gc
+        gc.collect()
         return file_bytes
 
     def _run_gemini_ocr(self, file_bytes: bytes) -> Optional[str]:

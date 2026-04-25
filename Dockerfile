@@ -21,8 +21,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY agents/ agents/
 COPY app.py .
 
-# Expose port (Cloud Run uses 8080 by default)
+# Expose port (Cloud Run/Render uses 8080 or PORT env var)
 EXPOSE 8080
 
-# Run FastAPI server
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080"]
+# Memory optimizations for Python:
+# 1. Limit MALLOC_ARENA_MAX to reduce memory fragmentation
+# 2. Use gunicorn with uvicorn workers for better process management
+# 3. Use max-requests to recycle workers and clear potential leaks
+ENV MALLOC_ARENA_MAX=2
+ENV PYTHONUNBUFFERED=1
+
+# Run with Gunicorn
+CMD ["gunicorn", "app:app", "--workers", "1", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8080", "--max-requests", "20", "--max-requests-jitter", "5", "--timeout", "120"]
