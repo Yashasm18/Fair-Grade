@@ -163,6 +163,7 @@ graph TD
 - **Enterprise-Grade Security & Audit Trails**: Implemented Google OAuth 2.0 to ensure that only verified educators can access the dashboard. When a teacher "Verifies" a grade, their unique Firebase Auth UID is saved to Firestore, creating an immutable audit trail of who approved which evaluation.
 - **Multi-Model Fallback**: The pipeline tries `gemini-2.5-flash` → `gemini-2.0-flash` → `gemini-2.0-flash-lite` → `gemini-2.5-flash-lite` with exponential backoff.
 - **Granular Error Handling**: Each agent has its own try-catch. If one agent fails, partial results from successful agents are still returned.
+- **Chain-of-Thought (CoT) Evaluation**: Our agents use Chain-of-Thought prompting to output a `thought_process` before assigning a grade. This forces the model to analyze the text literally and prevents "hallucinations" where the AI might invent answers that aren't actually present on the student's paper.
 - **Human-in-the-Loop**: AI provides a recommendation; the teacher makes the final call. This is a core **Responsible AI** principle.
 
 ---
