@@ -65,9 +65,10 @@ Note: Use decimals (e.g., 4.5, 7.5) for nuanced scoring.
 {text}
 </STUDENT_ANSWER>
 
-Respond in valid JSON with exactly three keys:
+Respond in valid JSON with exactly four keys in this specific order:
+- "thought_process": Write 1-2 sentences analyzing what is literally written inside the <STUDENT_ANSWER> tags. Does it contain a real answer, or just the question/junk?
 - "score": a number from 0 to 10
-- "explanation": a concise explanation referencing specific parts of the <STUDENT_ANSWER>. If the answer is just dates/junk, state that clearly.
+- "explanation": a concise explanation to show the teacher. If the answer is just dates/junk/repeating the question, state that clearly.
 - "confidence": a number from 0.0 to 1.0
 """
 
