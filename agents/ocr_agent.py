@@ -30,8 +30,10 @@ FALLBACK_MODELS = [
 
 EXTRACT_PROMPT = (
     "Extract all the handwritten and printed text from this image exactly as written. "
-    "Preserve the original formatting and line breaks as much as possible. "
-    "Do not add any extra commentary, introductory text, or markdown formatting."
+    "Preserve the original formatting and line breaks. "
+    "CRITICAL: Pay extremely close attention to mathematical operators (÷, /, +, -) and "
+    "numerical figures to ensure calculations are transcribed accurately. "
+    "Do not add any extra commentary or markdown formatting."
 )
 
 DEMO_FALLBACK_TEXT = (
