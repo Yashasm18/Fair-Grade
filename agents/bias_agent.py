@@ -16,9 +16,12 @@ import math
 class BiasAgent:
     """Agent 4 — Detects grading bias using score difference and completeness adjustment."""
 
-    # Thresholds for bias severity classification
-    HIGH_BIAS_THRESHOLD = 3.0
-    MEDIUM_BIAS_THRESHOLD = 1.0
+    # Thresholds for risk classification (Percentage)
+    HIGH_RISK_THRESHOLD = 30.0
+    MEDIUM_RISK_THRESHOLD = 15.0
+
+    # Threshold for status classification (Mark Difference)
+    FAIRNESS_THRESHOLD = 1.0
 
     def detect_bias(
         self,
@@ -46,7 +49,6 @@ class BiasAgent:
                 - 'formula_used': string explaining the logic
         """
         diff = abs(teacher_mark - ai_mark)
-        severity = self._classify_severity(diff)
         status = self._classify_status(teacher_mark, ai_mark)
 
         # ── Completeness Factor ───────────────────────────────────────────
@@ -59,6 +61,9 @@ class BiasAgent:
         # Apply completeness adjustment
         final_bias = raw_bias * completeness_factor
         final_bias = min(round(final_bias, 1), 100.0)
+
+        # Classify risk based on FINAL percentage
+        severity = self._classify_severity(final_bias)
 
         formula = (
             f"Bias Score (%) = min(100, |{teacher_mark} − {ai_mark}| × 10) "
@@ -78,17 +83,19 @@ class BiasAgent:
     # Private helpers
     # ------------------------------------------------------------------
 
-    def _classify_severity(self, diff: float) -> str:
-        if diff > self.HIGH_BIAS_THRESHOLD:
+    def _classify_severity(self, final_bias: float) -> str:
+        """Classify risk based on final bias percentage."""
+        if final_bias > self.HIGH_RISK_THRESHOLD:
             return "High"
-        if diff > self.MEDIUM_BIAS_THRESHOLD:
+        if final_bias > self.MEDIUM_RISK_THRESHOLD:
             return "Medium"
         return "Low"
 
     def _classify_status(self, teacher_mark: float, ai_mark: float) -> str:
-        if teacher_mark < ai_mark - self.MEDIUM_BIAS_THRESHOLD:
+        """Classify status based on raw mark difference."""
+        if teacher_mark < ai_mark - self.FAIRNESS_THRESHOLD:
             return "Undergraded"
-        if teacher_mark > ai_mark + self.MEDIUM_BIAS_THRESHOLD:
+        if teacher_mark > ai_mark + self.FAIRNESS_THRESHOLD:
             return "Overgraded"
         return "Fair"
 
