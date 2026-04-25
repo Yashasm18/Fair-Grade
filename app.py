@@ -110,10 +110,6 @@ class TeacherOverride(BaseModel):
 # Routes
 # ---------------------------------------------------------------------------
 
-@app.get("/api/health", tags=["Status"])
-async def health_check_api():
-    return {"status": "ok", "version": "2.1.2-CoT-Debug"}
-
 @app.get("/", tags=["Status"])
 @limiter.limit("60/minute")
 def health_check(request: Request):
