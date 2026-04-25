@@ -177,8 +177,8 @@ const ResultCard: React.FC<ResultCardProps> = ({ result, studentId, onRetry, onV
             </div>
           ) : (
             <>
-              <div className={`bias-level bias-${report.bias.level}`}>
-                {report.bias.level} Risk
+              <div className={`bias-level bias-${report.bias.level.split(' ')[0]}`}>
+                {report.bias.level.includes('Risk') ? report.bias.level : `${report.bias.level} Risk`}
               </div>
               <p style={{ marginTop: '0.4rem', fontWeight: 'bold', fontSize: '0.85rem' }} className={`status-${report.bias.status}`}>&rarr; {report.bias.status}</p>
               {report.bias.biasScorePercentage !== undefined && (
