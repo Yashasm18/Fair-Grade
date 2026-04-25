@@ -18,7 +18,7 @@
 </p>
 
 <p align="center">
-  🎬 <a href="https://youtu.be/YOUR_VIDEO_ID"><b>Watch the Demo Video</b></a>
+  🎬 <a href="#"><b>Watch the Demo Video [PENDING UPLOAD]</b></a>
   &nbsp;·&nbsp;
   👉 <a href="https://team-vektor-fairgrade.vercel.app/"><b>Try the Live Demo</b></a>
   &nbsp;·&nbsp;
