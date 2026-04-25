@@ -177,16 +177,19 @@ const ResultCard: React.FC<ResultCardProps> = ({ result, studentId, onRetry, onV
             </div>
           ) : (
             <>
-              <div className={`bias-level bias-${report.bias.level.split(' ')[0]}`}>
-                {report.bias.level.includes('Risk') ? report.bias.level : `${report.bias.level} Risk`}
+              <div className={`bias-level bias-${verified ? 'Fair' : report.bias.level.split(' ')[0]}`} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                {verified ? <ShieldCheck size={12} /> : null}
+                {verified ? 'Resolved' : (report.bias.level.includes('Risk') ? report.bias.level : `${report.bias.level} Risk`)}
               </div>
-              <p style={{ marginTop: '0.4rem', fontWeight: 'bold', fontSize: '0.85rem' }} className={`status-${report.bias.status}`}>&rarr; {report.bias.status}</p>
+              <p style={{ marginTop: '0.4rem', fontWeight: 'bold', fontSize: '0.85rem' }} className={`status-${verified ? 'Fair' : report.bias.status}`}>
+                {verified ? '✓ Grade Corrected' : `\u2192 ${report.bias.status}`}
+              </p>
               {report.bias.biasScorePercentage !== undefined && (
                 <div style={{ marginTop: '0.4rem', fontSize: '0.7rem', color: 'var(--text-muted)' }} title={report.bias.formulaUsed}>
-                  Bias Score: <strong style={{ color: 'var(--text-main)' }}>{report.bias.biasScorePercentage}%</strong>
-                  {report.bias.completenessFactor && (
+                  {verified ? 'Initial Bias: ' : 'Detected Bias: '} <strong style={{ color: 'var(--text-main)' }}>{report.bias.biasScorePercentage}%</strong>
+                  {report.bias.completenessFactor !== undefined && (
                     <div style={{ marginTop: '0.2rem', fontSize: '0.65rem', opacity: 0.8 }}>
-                      Completeness Factor: {report.bias.completenessFactor}
+                      Reliability (CF): {(report.bias.completenessFactor * 100).toFixed(0)}%
                     </div>
                   )}
                 </div>
