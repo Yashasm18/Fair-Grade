@@ -28,6 +28,7 @@
 </p>
 
 > **🧑‍⚖️ Note for Judges:** Click **"Try the Demo (Guest Mode)"** on the login screen to explore the full UI instantly — no authentication needed. *(First load may take ~30s as the free-tier backend wakes up.)*
+> The **[2-minute demo video](https://youtu.be/YOUR_VIDEO_ID)** shows: messy handwriting → OCR → anonymization → AI grade → bias report → teacher verification → analytics dashboard.
 
 ---
 
@@ -277,21 +278,6 @@ time curl -s -X POST http://localhost:8000/api/evaluate \
   -F "file=@tests/sample_answer.jpg" \
   -F "teacher_score=7" | python3 -m json.tool > /dev/null
 ```
-
----
-
-## 🎬 Demo Video Guide
-
-> **For judges:** A 2-minute walkthrough showing the full pipeline end-to-end.
-
-The video covers:
-1. **Upload** — drag a photo of messy handwriting into the app
-2. **Live pipeline** — watch each agent step animate in real-time (OCR → Privacy → Evaluation → Bias)
-3. **Results** — AI score, weighted score, confidence, and bias explainability indicators
-4. **Human-in-the-Loop** — teacher accepts or overrides the grade with an audit trail
-5. **Analytics** — school-wide bias heatmap and trend charts
-
-📽️ [**Watch the 2-minute demo →**](https://youtu.be/YOUR_VIDEO_ID)
 
 ---
 
