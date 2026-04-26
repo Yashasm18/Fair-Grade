@@ -158,6 +158,7 @@ class TeacherOverride(BaseModel):
 # Routes
 # ---------------------------------------------------------------------------
 
+
 @app.get("/", tags=["Status"])
 @limiter.limit("60/minute")
 def health_check(request: Request):
@@ -333,11 +334,16 @@ async def evaluate_answer(
 
 @app.post("/api/verify", tags=["Human-in-the-Loop"])
 @limiter.limit("20/minute")
-async def verify_evaluation(request: Request, override: TeacherOverride):
+async def verify_evaluation(
+    request: Request,
+    override: TeacherOverride,
+    x_api_key: Optional[str] = Header(default=None),
+):
     """
     Responsible AI: Teacher accepts or overrides the AI grade.
     AI assists humans — humans make the final decision.
     """
+    _verify_api_key(x_api_key)
     try:
         if override.action not in ("accept_ai", "override"):
             raise HTTPException(status_code=400, detail="Action must be 'accept_ai' or 'override'.")
@@ -371,8 +377,13 @@ async def verify_evaluation(request: Request, override: TeacherOverride):
 
 @app.post("/analyze", tags=["Lightweight"])
 @limiter.limit("30/minute")
-async def analyze(request: Request, file: UploadFile = File(...)):
+async def analyze(
+    request: Request,
+    file: UploadFile = File(...),
+    x_api_key: Optional[str] = Header(default=None),
+):
     """Lightweight endpoint: OCR + quick Gemini analysis only (no bias detection)."""
+    _verify_api_key(x_api_key)
     loop = asyncio.get_event_loop()
     try:
         content = await file.read()
