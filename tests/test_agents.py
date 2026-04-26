@@ -317,10 +317,15 @@ class TestEvaluationAgent:
         return EvaluationAgent(gemini_client=mock_client)
 
     def test_evaluate_returns_score(self):
-        agent = self._make_agent({"score": 8, "explanation": "Good.", "confidence": 0.9, "thought_process": "..."})
+        agent = self._make_agent({"score": 8, "explanation": "Good.", "confidence": 0.9,
+                                  "thought_process": "...", "bias_indicators": []})
         result = agent.evaluate("Some answer text", "What is photosynthesis?")
         assert result["score"] == 8
         assert result["confidence"] == 0.9
+        # v2.1: weighted fields should be present
+        assert "weighted_score" in result
+        assert result["question_weight"] == 1.0
+        assert "bias_indicators" in result
 
     def test_evaluate_no_client_returns_mock(self):
         agent = EvaluationAgent(gemini_client=None)
@@ -328,10 +333,14 @@ class TestEvaluationAgent:
         assert result["score"] == 8
         assert "Mocked" in result["explanation"]
         assert result["confidence"] == 0.0
+        # v2.1: also returns weighted_score, question_weight, bias_indicators
+        assert "weighted_score" in result
+        assert "question_weight" in result
+        assert "bias_indicators" in result
 
     def test_evaluate_strips_markdown_fences(self):
         mock_response = MagicMock()
-        mock_response.text = "```json\n{\"score\": 7, \"explanation\": \"OK\", \"confidence\": 0.8, \"thought_process\": \"...\"}\n```"
+        mock_response.text = "```json\n{\"score\": 7, \"explanation\": \"OK\", \"confidence\": 0.8, \"thought_process\": \"...\", \"bias_indicators\": []}\n```"
         mock_client = MagicMock()
         mock_client.models.generate_content.return_value = mock_response
         agent = EvaluationAgent(gemini_client=mock_client)
@@ -350,13 +359,18 @@ class TestEvaluationAgent:
         assert "QUOTA_EXHAUSTED" in result["explanation"]
 
     def test_build_prompt_includes_answer(self):
-        prompt = _build_prompt("My answer here", "What is photosynthesis?")
+        prompt = _build_prompt("My answer here", "What is photosynthesis?", 1.0)
         assert "My answer here" in prompt
         assert "What is photosynthesis?" in prompt
 
     def test_build_prompt_no_context(self):
-        prompt = _build_prompt("My answer", None)
+        prompt = _build_prompt("My answer", None, 1.0)
         assert "No specific context provided" in prompt
+
+    def test_build_prompt_weighted_note(self):
+        prompt = _build_prompt("My answer", "Explain osmosis.", 2.0)
+        assert "WEIGHT" in prompt
+        assert "2.0x" in prompt
 
     def test_is_quota_exhausted_true(self):
         assert _is_quota_exhausted("limit: 0 exceeded your current quota") is True
@@ -373,11 +387,12 @@ class TestEvaluationAgent:
 
     def test_evaluate_missing_keys_defaults(self):
         """Partial JSON from API — agent should gracefully default missing keys."""
-        agent = self._make_agent({"score": 5, "thought_process": "..."})  # missing explanation & confidence
+        agent = self._make_agent({"score": 5, "thought_process": "..."})  # missing explanation, confidence, bias_indicators
         result = agent.evaluate("Some text")
         assert result["score"] == 5
         assert result["explanation"] == ""
         assert result["confidence"] == 1.0  # default
+        assert result["bias_indicators"] == []  # v2.1 default
 
 
 # ===========================================================================
@@ -397,9 +412,19 @@ class TestAPIIntegration:
         # Patch OCRAgent to return canned text
         monkeypatch.setattr(agents.OCRAgent, "extract_text",
                             lambda self, b, n: "Name: Test Student\nPhotosynthesis makes glucose.")
-        # Patch EvaluationAgent to return canned evaluation
+        # Patch EvaluationAgent to return canned evaluation (v2.1 shape)
         monkeypatch.setattr(agents.EvaluationAgent, "evaluate",
-                            lambda self, t, q=None: {"score": 7, "explanation": "Good answer.", "confidence": 0.88})
+                            lambda self, t, q=None, w=1.0: {
+                                "score": 7,
+                                "weighted_score": 7.0,
+                                "question_weight": 1.0,
+                                "explanation": "Good answer.",
+                                "confidence": 0.88,
+                                "bias_indicators": ["Correct: main concept named"],
+                            })
+
+        # Clear API key auth so integration tests don't need to send a header
+        monkeypatch.setenv("FAIRGRADE_API_KEY", "")
 
         # Import app module AFTER patches are applied
         # Use a fresh sys.modules pop so monkeypatch env is respected
