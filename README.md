@@ -128,36 +128,54 @@ FairGrade AI uses a **5-agent pipeline** where each agent has a single responsib
 
 ```mermaid
 graph TD
-    A[Teacher uploads Answer Sheet + Rubric] --> |POST /api/evaluate\nX-API-Key header| C[API Gateway - FastAPI]
+    Teacher["👩‍🏫 Teacher\nUploads answer sheet + sets Question Weight"]
 
-    subgraph AI Agent Pipeline
-        D[1. OCR Agent - Gemini 2.5 Pro Vision]
-        E[2. Privacy Agent - PII Redaction]
-        F[3. Evaluation Agent - Gemini 2.5 Pro\nWeighted Rubric + Bias Indicators]
-        G[4. Bias Agent - Algorithm\nCompleteness Factor + Explainability]
-        H[5. Reporting Agent]
+    subgraph Frontend ["⚛️ React Frontend - Vercel"]
+        UI["EvaluationSetup\nWeight slider · Teacher score"]
+        RC["ResultCard\nWeighted score badge\nBias Explainability panel"]
+        AN["Analytics Dashboard\nBias heatmap · Score trends"]
     end
 
-    C --> D
-    D --> |Raw Text| E
-    E --> |Anonymized Text| F
-    F --> |AI Score + Weighted Score + Bias Indicators| G
-    G --> |Bias Report + Severity| H
-    H --> |JSON Response| B[Analytics Dashboard]
-    B --> |Review Results| J[Teacher Verifies - Accept or Override]
-    J --> |POST /api/verify| C
-    C --> |Saves Metrics + bias_indicators| I[Firebase Firestore]
+    subgraph Backend ["🐍 FastAPI Backend - Render — X-API-Key on all write endpoints"]
+        GW["API Gateway\n/api/evaluate · /api/verify · /analyze\nRate limited · CORS · GZip"]
+        S["🔍 Sentry\nError monitoring"]
 
-    style A fill:#3b82f6,stroke:#1d4ed8,color:#fff
-    style B fill:#3b82f6,stroke:#1d4ed8,color:#fff
-    style C fill:#10b981,stroke:#047857,color:#fff
-    style D fill:#f59e0b,stroke:#b45309,color:#fff
-    style E fill:#f59e0b,stroke:#b45309,color:#fff
-    style F fill:#f59e0b,stroke:#b45309,color:#fff
-    style G fill:#f59e0b,stroke:#b45309,color:#fff
-    style H fill:#f59e0b,stroke:#b45309,color:#fff
-    style I fill:#ec4899,stroke:#be185d,color:#fff
-    style J fill:#059669,stroke:#047857,color:#fff
+        subgraph Pipeline ["5-Agent Pipeline"]
+            OCR["1. OCR Agent\nGemini 2.5 Pro Vision\n93% handwriting accuracy"]
+            PII["2. Privacy Agent\nPII redaction — regex\nNames · Roll nos · IDs"]
+            EVAL["3. Evaluation Agent\nGemini 2.5 Pro\nWeighted rubric · bias_indicators"]
+            BIAS["4. Bias Agent\nCompleteness Factor formula\nSeverity + Explainability"]
+            REP["5. Reporting Agent\nAssembles JSON response\nweightedScore · biasIndicators"]
+        end
+    end
+
+    DB[("🔥 Firebase Firestore\nai_score · weighted_score\nquestion_weight · bias_indicators\nteacher_uid audit trail")]
+
+    Teacher --> UI
+    UI --> |"POST /api/evaluate + X-API-Key\n+ question_weight form field"| GW
+    GW --> OCR
+    OCR --> |"Raw text"| PII
+    PII --> |"Anonymized text"| EVAL
+    EVAL --> |"score · weighted_score · bias_indicators"| BIAS
+    BIAS --> |"bias report + severity"| REP
+    REP --> |"Full JSON response"| RC
+    RC --> |"POST /api/verify + X-API-Key\nAccept or Override"| GW
+    GW --> DB
+    AN --> DB
+    GW -.-> S
+
+    style Teacher fill:#3b82f6,stroke:#1d4ed8,color:#fff
+    style GW fill:#10b981,stroke:#047857,color:#fff
+    style OCR fill:#f59e0b,stroke:#b45309,color:#fff
+    style PII fill:#f59e0b,stroke:#b45309,color:#fff
+    style EVAL fill:#8b5cf6,stroke:#6d28d9,color:#fff
+    style BIAS fill:#f59e0b,stroke:#b45309,color:#fff
+    style REP fill:#f59e0b,stroke:#b45309,color:#fff
+    style DB fill:#ec4899,stroke:#be185d,color:#fff
+    style S fill:#362d59,stroke:#6d28d9,color:#fff
+    style RC fill:#3b82f6,stroke:#1d4ed8,color:#fff
+    style AN fill:#3b82f6,stroke:#1d4ed8,color:#fff
+    style UI fill:#3b82f6,stroke:#1d4ed8,color:#fff
 ```
 
 ### Key Design Decisions
