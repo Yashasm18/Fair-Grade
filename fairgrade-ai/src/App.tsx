@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileSearch, Download, PieChart, Home, FileType, Sparkles, Zap, LogIn, LogOut, ShieldCheck, UserCheck } from 'lucide-react';
+import { FileSearch, Download, PieChart, Home, FileType, Sparkles, Zap, LogIn, LogOut, ShieldCheck, UserCheck, Wifi, WifiOff } from 'lucide-react';
 import { auth, db } from "./config/firebase";
 import { collection, addDoc } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from "firebase/auth";
@@ -9,15 +9,19 @@ import AgentPipeline from "./components/AgentPipeline";
 import ResultCard from "./components/ResultCard";
 import Footer from "./components/Footer";
 import DarkModeToggle from "./components/DarkModeToggle";
+import SkeletonLoader from "./components/SkeletonLoader";
+import { useToast } from "./components/Toast";
 import type { FileResult, VerifyPayload } from './types';
 
 // ─── Configurable API URL ───
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 // ─── App-level constants (replace magic numbers scattered inline) ───
-const RATE_LIMIT_DELAY_MS = 3000;   // ms to wait between batch files (Gemini 429 guard)
-const MAX_TEACHER_SCORE    = 10;    // maximum score on the 0–10 scale
+const RATE_LIMIT_DELAY_MS   = 3000;  // ms to wait between batch files (Gemini 429 guard)
+const MAX_TEACHER_SCORE     = 10;   // maximum score on the 0–10 scale
 const FILENAME_TRUNCATE_LEN = 28;   // max chars before truncation with ellipsis
+// Pipeline animation: each step shown for 3 s so it doesn't finish before real backend work
+const PIPELINE_STEP_MS      = 3000;
 
 // ─── Demo Mode Sample Data ───
 const DEMO_RESULTS: FileResult[] = [
@@ -84,9 +88,14 @@ function App() {
     localStorage.setItem('fairgrade_theme', isDark ? 'dark' : 'light');
   }, [isDark]);
 
-  // ─── Pre-warm Backend ───
+  // ─── Backend connection state (pre-warm indicator) ───
+  const [backendStatus, setBackendStatus] = useState<'connecting' | 'online' | 'offline'>('connecting');
+
   useEffect(() => {
-    fetch(`${API_URL}/`).catch(() => { /* ignore pre-warm errors */ });
+    setBackendStatus('connecting');
+    fetch(`${API_URL}/`)
+      .then(r => { if (r.ok) setBackendStatus('online'); else setBackendStatus('offline'); })
+      .catch(() => setBackendStatus('offline'));
   }, []);
 
   // ─── Navigation & Demo Mode ───
@@ -133,6 +142,9 @@ function App() {
   const [results, setResults] = useState<FileResult[]>([]);
   const [currentStep, setCurrentStep] = useState(-1);
   const [globalError, setGlobalError] = useState('');
+  const [isRateLimiting, setIsRateLimiting] = useState(false);
+
+  const { showToast } = useToast();
 
   const handleStudentIdChange = (fileName: string, value: string): void => {
     setStudentIds(prev => ({ ...prev, [fileName]: value }));
@@ -254,7 +266,10 @@ function App() {
 
         // Rate-limit guard: wait between files to avoid Gemini 429 errors
         if (i > 0) {
+          setIsRateLimiting(true);
+          showToast(`Rate limiting — waiting ${RATE_LIMIT_DELAY_MS / 1000}s for API quota before next file…`, 'info', RATE_LIMIT_DELAY_MS);
           await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_DELAY_MS));
+          setIsRateLimiting(false);
         }
 
         const file = files[i];
@@ -265,10 +280,11 @@ function App() {
           formData.append("question_context", questionContext);
         }
 
-        // Animate steps visually
+        // Animate pipeline steps. PIPELINE_STEP_MS keeps the animation
+        // in sync with actual backend processing time (OCR alone can take 5-15s).
         const stepInterval = setInterval(() => {
           setCurrentStep(prev => (prev < 4 ? prev + 1 : prev));
-        }, 800);
+        }, PIPELINE_STEP_MS);
 
         try {
           const response = await fetch(`${API_URL}/api/evaluate`, {
@@ -280,39 +296,54 @@ function App() {
           setCurrentStep(5); // Complete
 
           if (!response.ok) {
-            throw new Error(await response.text() || `Failed to process ${file.name}.`);
+            const errText = await response.text();
+            // Surface Gemini quota errors with specific guidance
+            if (errText.includes('QUOTA_EXHAUSTED') || errText.includes('429')) {
+              throw new Error('Gemini API quota exhausted. Please wait ~1 minute and retry, or enable billing at aistudio.google.com/api-keys.');
+            }
+            throw new Error(errText || `Failed to process ${file.name}.`);
           }
 
           const data = await response.json();
+
+          // Warn if backend reported any agent failures
+          if (data.pipelineWarnings?.length) {
+            data.pipelineWarnings.forEach((w: { agent: string; error: string }) =>
+              showToast(`${w.agent}: ${w.error.slice(0, 80)}`, 'warning', 6000)
+            );
+          }
+
+          // Show quota exhaustion even in partial success (score=0 with QUOTA message)
+          if (data.evaluation?.explanation?.includes('QUOTA_EXHAUSTED')) {
+            showToast('Gemini quota exhausted — AI grading unavailable. Wait ~1 min or enable billing.', 'error', 8000);
+          } else {
+            showToast(`✓ ${truncateName(file.name)} evaluated — AI score: ${data.evaluation?.aiScore ?? '?'}/10`, 'success');
+          }
+
           const reportObj: FileResult = { fileName: file.name, data, error: null };
           sessionResults.push(reportObj);
 
-          // --- Save to Firestore ---
-          try {
-            if (import.meta.env.VITE_FIREBASE_API_KEY) {
-              await addDoc(collection(db, "evaluations"), {
-                student_identifier: studentIds[file.name] || 'N/A',
-                teacher_uid: user?.uid || 'anonymous',
-                teacher_email: user?.email || 'anonymous',
-                ai_score: data.evaluation.aiScore,
-                teacher_score: Number(teacherScore),
-                bias_status: data.bias.status,
-                bias_level: data.bias.level,
-                anonymized_text: data.anonymizedText,
-                explanation: data.evaluation.explanation,
-                timestamp: new Date()
-              });
-              console.log("Saved evaluation to Firestore!");
-            } else {
-              console.warn("Firebase not configured. Skipping Firestore upload.");
-            }
-          } catch (fsErr) {
-            console.error("Failed to save to Firestore:", fsErr);
+          // Save to Firestore (fire-and-forget)
+          if (import.meta.env.VITE_FIREBASE_API_KEY) {
+            addDoc(collection(db, 'evaluations'), {
+              student_identifier: studentIds[file.name] || 'N/A',
+              teacher_uid: user?.uid || 'anonymous',
+              teacher_email: user?.email || 'anonymous',
+              ai_score: data.evaluation.aiScore,
+              teacher_score: Number(teacherScore),
+              bias_status: data.bias.status,
+              bias_level: data.bias.level,
+              anonymized_text: data.anonymizedText,
+              explanation: data.evaluation.explanation,
+              timestamp: new Date(),
+            }).catch(fsErr => console.error('Firestore write failed:', fsErr));
           }
 
         } catch (err) {
           clearInterval(stepInterval);
-          sessionResults.push({ fileName: file.name, data: null, error: (err as Error).message });
+          const errMsg = (err as Error).message;
+          showToast(`${truncateName(file.name)}: ${errMsg.slice(0, 100)}`, 'error', 7000);
+          sessionResults.push({ fileName: file.name, data: null, error: errMsg });
         }
 
         setResults([...sessionResults]);
@@ -439,6 +470,24 @@ function App() {
         <div>
           <h1 className="logo-text">FairGrade AI</h1>
           <p className="subtitle">Exposing hidden bias affecting millions of students to give schools actionable insights.</p>
+          {/* Backend connection status pill */}
+          <span
+            aria-label={`Backend status: ${backendStatus}`}
+            title={backendStatus === 'offline' ? 'Backend is offline — results may be slow or unavailable' : ''}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+              fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.03em',
+              padding: '0.15rem 0.55rem', borderRadius: '999px', marginTop: '0.3rem',
+              background: backendStatus === 'online' ? 'rgba(5,150,105,0.1)' : backendStatus === 'offline' ? 'rgba(239,68,68,0.1)' : 'rgba(124,58,237,0.1)',
+              color: backendStatus === 'online' ? '#059669' : backendStatus === 'offline' ? '#ef4444' : 'var(--primary)',
+              border: `1px solid ${backendStatus === 'online' ? 'rgba(5,150,105,0.25)' : backendStatus === 'offline' ? 'rgba(239,68,68,0.25)' : 'rgba(124,58,237,0.2)'}`,
+            }}
+          >
+            {backendStatus === 'online' ? <Wifi size={10} /> : backendStatus === 'offline' ? <WifiOff size={10} /> : (
+              <span style={{ display: 'inline-block', width: 8, height: 8, border: '1.5px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            )}
+            {backendStatus === 'connecting' ? 'Connecting to server…' : backendStatus === 'online' ? 'Server online' : 'Server offline'}
+          </span>
         </div>
         <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
           {user && (
@@ -571,8 +620,20 @@ function App() {
 
           {/* Main Content Area */}
           <div style={demoMode ? { gridColumn: '1 / -1' } : {}}>
+            {/* Rate-limiting banner — shown during inter-file delay */}
+            {isRateLimiting && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.65rem 1rem', marginBottom: '1rem', background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)', borderRadius: '10px', fontSize: '0.82rem', color: 'var(--primary)' }}>
+                <span style={{ display: 'inline-block', width: 14, height: 14, border: '2px solid currentColor', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
+                Rate limiting — waiting {RATE_LIMIT_DELAY_MS / 1000}s for Gemini API quota before processing next file…
+              </div>
+            )}
+
             {!demoMode && (isProcessing || currentStep > -1) ? (
-              <AgentPipeline currentStep={currentStep} fileName={truncateName(files[currentFileIndex]?.name || '')} />
+              <>
+                <AgentPipeline currentStep={currentStep} fileName={truncateName(files[currentFileIndex]?.name || '')} />
+                {/* Skeleton cards preview the result layout while backend runs */}
+                <SkeletonLoader count={Math.max(1, files.length - results.length)} />
+              </>
             ) : !demoMode && displayResults.length === 0 && (
               <div className="glass-panel empty-state">
                 <FileSearch size={56} />

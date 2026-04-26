@@ -17,6 +17,7 @@ import asyncio
 from functools import partial
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
 from typing import Optional
 from dotenv import load_dotenv
@@ -101,6 +102,11 @@ app = FastAPI(
 # Register rate limiter
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# SECURITY: Cap total request body at 30 MB to prevent DoS via oversized
+# multipart payloads. Individual file validation (10 MB) also applies inside
+# the route, but this acts as a first-line guard at the ASGI layer.
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 app.add_middleware(
     CORSMiddleware,

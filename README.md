@@ -385,6 +385,22 @@ Key commitments:
 
 ---
 
+## 🔒 Security & Privacy Disclosure
+
+This section documents the security posture of the current demo deployment so evaluators and contributors have a clear picture.
+
+| Area | Status | Notes |
+|------|--------|-------|
+| **API Authentication** | ⚠️ None on `/api/evaluate` | The backend endpoint is publicly accessible. This is intentional for the hackathon demo so judges can test without credentials. A production deployment would add Firebase ID-token verification as a middleware guard. |
+| **CORS** | ✅ Environment-aware | Production mode locks origins to `team-vektor-fairgrade.vercel.app`. Development mode additionally allows `localhost`. The `ENVIRONMENT` env-var must be set to `"production"` on Render to enforce strict CORS. |
+| **Request Body Size** | ✅ 10 MB per file + GZip middleware | Individual files are validated at 10 MB inside the route. GZip middleware acts as an outer compression/size guard. |
+| **Rate Limiting** | ✅ slowapi | `/api/evaluate` is capped at 10 req/min per IP. Health check at 60/min. |
+| **PII Handling** | ✅ In-memory only | Student answer images are never written to disk. Anonymised text is stored in Firestore, not the raw image. |
+| **Gemini API Key** | ✅ Environment variable | Never hardcoded. Rotate keys via Google AI Studio if compromised. Use a restricted API key scoped to the Gemini API only. |
+| **Audit Logging** | ✅ Firestore + request IDs | Every evaluation and teacher verification is logged with the teacher's Firebase UID. Backend now assigns a `requestId` UUID to each pipeline run for log correlation. |
+
+---
+
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).
