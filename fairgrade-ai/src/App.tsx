@@ -15,6 +15,8 @@ import type { FileResult, VerifyPayload } from './types';
 
 // ─── Configurable API URL ───
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// ─── API key sent as X-API-Key header (matches backend FAIRGRADE_API_KEY) ───
+const FAIRGRADE_API_KEY = import.meta.env.VITE_FAIRGRADE_API_KEY || "";
 
 // ─── App-level constants (replace magic numbers scattered inline) ───
 const RATE_LIMIT_DELAY_MS   = 3000;  // ms to wait between batch files (Gemini 429 guard)
@@ -133,6 +135,7 @@ function App() {
   // ─── Evaluation State ───
   const [teacherScore, setTeacherScore] = useState('');
   const [questionContext, setQuestionContext] = useState('');
+  const [questionWeight, setQuestionWeight] = useState<number>(1.0);
   const [studentIds, setStudentIds] = useState<Record<string, string>>({});
   const [files, setFiles] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
@@ -211,6 +214,7 @@ function App() {
 
       const response = await fetch(`${API_URL}/api/evaluate`, {
         method: "POST",
+        headers: FAIRGRADE_API_KEY ? { 'X-API-Key': FAIRGRADE_API_KEY } : {},
         body: formData,
       });
 
@@ -225,9 +229,12 @@ function App() {
           await addDoc(collection(db, "evaluations"), {
             student_identifier: studentIds[file.name] || 'N/A',
             ai_score: data.evaluation.aiScore,
+            weighted_score: data.weightedScore ?? data.evaluation.aiScore,
+            question_weight: data.questionWeight ?? 1.0,
             teacher_score: Number(teacherScore),
             bias_status: data.bias.status,
             bias_level: data.bias.level,
+            bias_indicators: data.biasIndicators ?? [],
             anonymized_text: data.anonymizedText,
             explanation: data.evaluation.explanation,
             timestamp: new Date()
@@ -280,6 +287,7 @@ function App() {
         if (questionContext) {
           formData.append("question_context", questionContext);
         }
+        formData.append("question_weight", String(questionWeight));
 
         // Animate pipeline steps. PIPELINE_STEP_MS keeps the animation
         // in sync with actual backend processing time (OCR alone can take 5-15s).
@@ -290,6 +298,7 @@ function App() {
         try {
           const response = await fetch(`${API_URL}/api/evaluate`, {
             method: "POST",
+            headers: FAIRGRADE_API_KEY ? { 'X-API-Key': FAIRGRADE_API_KEY } : {},
             body: formData,
           });
 
@@ -331,9 +340,12 @@ function App() {
               teacher_uid: user?.uid || 'anonymous',
               teacher_email: user?.email || 'anonymous',
               ai_score: data.evaluation.aiScore,
+              weighted_score: data.weightedScore ?? data.evaluation.aiScore,
+              question_weight: data.questionWeight ?? 1.0,
               teacher_score: Number(teacherScore),
               bias_status: data.bias.status,
               bias_level: data.bias.level,
+              bias_indicators: data.biasIndicators ?? [],
               anonymized_text: data.anonymizedText,
               explanation: data.evaluation.explanation,
               timestamp: new Date(),
@@ -603,6 +615,8 @@ function App() {
               setTeacherScore={setTeacherScore}
               questionContext={questionContext}
               setQuestionContext={setQuestionContext}
+              questionWeight={questionWeight}
+              setQuestionWeight={setQuestionWeight}
               files={files}
               studentIds={studentIds}
               handleStudentIdChange={handleStudentIdChange}

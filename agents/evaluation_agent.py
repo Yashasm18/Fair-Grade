@@ -2,10 +2,9 @@
 Evaluation Agent — Grades anonymized student answers using Google Gemini AI.
 
 Google Cloud Technology: Google Gemini API (google-genai SDK)
-Models: gemini-2.5-flash, gemini-2.0-flash, gemini-2.0-flash-lite
-Evaluates factual correctness against the teacher's rubric/context.
-Implements multi-model fallback with exponential backoff to handle
-free-tier quota limits gracefully.
+Primary model: gemini-2.5-pro (best reasoning for nuanced rubric scoring).
+Fallback chain: gemini-2.5-flash → gemini-2.0-flash → gemini-2.0-flash-lite.
+Supports per-question weight multipliers for a realistic weighted rubric.
 """
 
 import json
@@ -13,7 +12,10 @@ import re
 import time
 from typing import Optional, Union
 
+# gemini-2.5-pro is the primary model: best at following rubric instructions.
+# Falls back to flash models if Pro quota is exhausted on the free tier.
 FALLBACK_MODELS = [
+    "gemini-2.5-pro",
     "gemini-2.5-flash",
     "gemini-2.0-flash",
     "gemini-2.0-flash-lite",  # gemini-2.5-flash-lite removed: unverified model name
@@ -37,7 +39,14 @@ def _extract_retry_delay(err: str) -> Optional[float]:
     return None
 
 
-def _build_prompt(text: str, question_context: Optional[str]) -> str:
+def _build_prompt(text: str, question_context: Optional[str], question_weight: float = 1.0) -> str:
+    # Effective total marks available after weight adjustment
+    weight_note = (
+        f"\nWEIGHT: This question is worth {question_weight:.1f}x. "
+        f"Your raw score (0–10) will be multiplied by {question_weight:.1f} by the system — "
+        "grade as normal on the 0–10 scale; the weighting is applied externally."
+        if question_weight != 1.0 else ""
+    )
     return f"""You are an expert, strict AI grader evaluating a student's handwritten answer that has been extracted via OCR.
 
 CRITICAL ANTI-HALLUCINATION INSTRUCTIONS:
@@ -54,7 +63,12 @@ GRADING RUBRIC (0 to 10):
 - 2-4: Significant gaps.
 - 1: Completely incorrect attempt.
 - 0: Strictly metadata, off-topic, gibberish, or empty. 
-Note: Use decimals (e.g., 4.5, 7.5) for nuanced scoring.
+Note: Use decimals (e.g., 4.5, 7.5) for nuanced scoring.{weight_note}
+
+WEIGHTED RUBRIC GUIDANCE:
+- Consider the cognitive demand implied by the question context.
+- Higher-weight questions typically require deeper analysis or multi-step reasoning.
+- Apply stricter partial-credit logic proportional to the question complexity.
 
 <QUESTION_AND_CONTEXT>
 {question_context if question_context else "No specific context provided. Grade based on general factual correctness."}
@@ -64,11 +78,12 @@ Note: Use decimals (e.g., 4.5, 7.5) for nuanced scoring.
 {text}
 </STUDENT_ANSWER>
 
-Respond in valid JSON with exactly four keys in this specific order:
+Respond in valid JSON with exactly five keys in this specific order:
 - "thought_process": Write 1-2 sentences analyzing what is literally written inside the <STUDENT_ANSWER> tags. Does it contain a real answer, or just the question/junk?
 - "score": a number from 0 to 10
 - "explanation": a concise explanation to show the teacher. If the answer is just dates/junk/repeating the question, state that clearly.
 - "confidence": a number from 0.0 to 1.0
+- "bias_indicators": an array of short strings (max 3) listing specific phrases or omissions that most influenced the score, to support bias explainability. E.g. ["Missing: definition of ATP", "Correct: electron transport chain named", "Vague: 'produces energy' without mechanism"]
 """
 
 
@@ -78,50 +93,76 @@ class EvaluationAgent:
     def __init__(self, gemini_client=None):
         self.client = gemini_client
 
-    def evaluate(self, text: str, question_context: Optional[str] = None) -> dict:
+    def evaluate(
+        self,
+        text: str,
+        question_context: Optional[str] = None,
+        question_weight: float = 1.0,
+    ) -> dict:
         """
-        Grade the anonymized student answer out of 10.
+        Grade the anonymized student answer out of 10, with optional weight multiplier.
 
         Args:
             text: Anonymized student answer text.
             question_context: Optional rubric / expected answer from the teacher.
+            question_weight: Multiplier applied to the raw score (e.g. 2.0 for a
+                double-weighted question). Must be between 0.1 and 5.0. The raw
+                AI score is always 0–10; the weighted score is returned separately
+                so the UI can display both values.
 
         Returns:
-            dict with keys 'score' (int), 'explanation' (str), and 'confidence' (float).
+            dict with keys:
+                - 'score': raw AI score (0–10, float)
+                - 'weighted_score': score × weight, capped at 10 (float)
+                - 'question_weight': the weight applied (float)
+                - 'explanation': AI reasoning string
+                - 'confidence': self-reported confidence (0.0–1.0)
+                - 'bias_indicators': list of strings explaining the scoring decision
         """
+        question_weight = max(0.1, min(5.0, float(question_weight)))  # clamp
         if not self.client:
-            return {"score": 8, "explanation": "Mocked score — Gemini API key is not configured.", "confidence": 0.0}
+            return {
+                "score": 8,
+                "weighted_score": min(10.0, 8 * question_weight),
+                "question_weight": question_weight,
+                "explanation": "Mocked score — Gemini API key is not configured.",
+                "confidence": 0.0,
+                "bias_indicators": [],
+            }
 
-        prompt = _build_prompt(text, question_context)
-        return self._run_with_fallback(prompt)
+        prompt = _build_prompt(text, question_context, question_weight)
+        return self._run_with_fallback(prompt, question_weight)
 
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
 
-    def _run_with_fallback(self, prompt: str) -> dict:
+    def _run_with_fallback(self, prompt: str, question_weight: float = 1.0) -> dict:
         from google.genai import types
 
         last_error = None
 
         for model_name in FALLBACK_MODELS:
             print(f"[EVAL] Trying model: {model_name}")
-            result = self._try_model(model_name, prompt, types)
+            result = self._try_model(model_name, prompt, types, question_weight)
             if isinstance(result, dict):
                 return result
             last_error = result  # result is the exception on failure
 
         return {
             "score": 0,
+            "weighted_score": 0.0,
+            "question_weight": question_weight,
             "explanation": (
                 "QUOTA_EXHAUSTED: All Gemini model quotas have been exhausted on the free tier. "
                 "Please wait for the quota to reset (~24 hours) or enable billing at "
                 "https://aistudio.google.com/api-keys."
             ),
             "confidence": 0.0,
+            "bias_indicators": [],
         }
 
-    def _try_model(self, model_name: str, prompt: str, types) -> Union[dict, Exception]:
+    def _try_model(self, model_name: str, prompt: str, types, question_weight: float = 1.0) -> Union[dict, Exception]:
         """Attempt generation on a single model with retry backoff. Returns dict on success."""
         for attempt in range(_MAX_RETRIES):
             try:
@@ -141,11 +182,16 @@ class EvaluationAgent:
                     result_text = fence.group(1).strip()
 
                 data = json.loads(result_text)
-                print(f"[EVAL] ✓ Success with {model_name}")
+                raw_score = float(data.get("score", 0))
+                weighted = round(min(10.0, raw_score * question_weight), 2)
+                print(f"[EVAL] ✓ Success with {model_name} | score={raw_score} weight={question_weight} weighted={weighted}")
                 return {
-                    "score": data.get("score", 0), 
+                    "score": raw_score,
+                    "weighted_score": weighted,
+                    "question_weight": question_weight,
                     "explanation": data.get("explanation", ""),
-                    "confidence": data.get("confidence", 1.0)
+                    "confidence": data.get("confidence", 1.0),
+                    "bias_indicators": data.get("bias_indicators", []),
                 }
 
             except Exception as exc:

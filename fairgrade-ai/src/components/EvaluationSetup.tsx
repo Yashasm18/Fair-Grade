@@ -25,6 +25,8 @@ const EvaluationSetup: React.FC<EvaluationSetupProps> = ({
   setTeacherScore,
   questionContext,
   setQuestionContext,
+  questionWeight,
+  setQuestionWeight,
   files,
   studentIds,
   handleStudentIdChange,
@@ -96,6 +98,33 @@ const EvaluationSetup: React.FC<EvaluationSetupProps> = ({
             aria-label="Teacher score slider"
           />
         </div>
+      </div>
+
+      {/* ── Question Weight (P1: weighted rubric) ── */}
+      <div className="input-group">
+        <label htmlFor="question-weight" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>Question Weight</span>
+          <span style={{
+            fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em',
+            padding: '0.15rem 0.55rem', borderRadius: '999px',
+            background: 'rgba(124,58,237,0.1)', color: 'var(--primary)',
+            border: '1px solid rgba(124,58,237,0.2)',
+          }}>{questionWeight.toFixed(1)}×</span>
+        </label>
+        <input
+          id="question-weight"
+          type="range"
+          className="score-slider"
+          min="0.5"
+          max="3"
+          step="0.5"
+          value={questionWeight}
+          onChange={e => setQuestionWeight(parseFloat(e.target.value))}
+          aria-label="Question weight multiplier"
+        />
+        <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+          Multiplies the AI score — use 2× for important questions, 3× for high-stakes items.
+        </p>
       </div>
 
       <div className="input-group">

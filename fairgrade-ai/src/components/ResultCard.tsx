@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RotateCcw, AlertTriangle, Clock, CheckCircle, Edit3, ShieldCheck } from 'lucide-react';
+import { RotateCcw, AlertTriangle, Clock, CheckCircle, Edit3, ShieldCheck, ZoomIn } from 'lucide-react';
 import type { ResultCardProps, EvaluationReport } from '../types';
 
 /**
@@ -163,6 +163,17 @@ const ResultCard: React.FC<ResultCardProps> = ({ result, studentId, onRetry, onV
             {isQuotaIssue ? '—' : report.evaluation.aiScore}
             {!isQuotaIssue && <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>/10</span>}
           </p>
+          {/* Weighted score badge — only shown when weight != 1 */}
+          {!isQuotaIssue && report.weightedScore !== undefined && report.questionWeight !== undefined && report.questionWeight !== 1.0 && (
+            <div style={{
+              marginTop: '0.25rem', fontSize: '0.7rem', fontWeight: 700,
+              padding: '0.1rem 0.4rem', borderRadius: '999px', display: 'inline-block',
+              background: 'rgba(124,58,237,0.1)', color: 'var(--primary)',
+              border: '1px solid rgba(124,58,237,0.2)',
+            }} title={`This question is weighted ${report.questionWeight}x`}>
+              {report.weightedScore}/10 ({report.questionWeight}×)
+            </div>
+          )}
           {!isQuotaIssue && report.evaluation.confidenceScore && (
             <div style={{ marginTop: '0.2rem', fontSize: '0.7rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '3px' }}>
                <span>Confidence: {(report.evaluation.confidenceScore * 100).toFixed(0)}%</span>
@@ -276,6 +287,27 @@ const ResultCard: React.FC<ResultCardProps> = ({ result, studentId, onRetry, onV
           </div>
         </div>
       </div>
+
+      {/* ── Per-Question Bias Explainability (P1) ── */}
+      {!isQuotaIssue && report.biasIndicators && report.biasIndicators.length > 0 && (
+        <div style={{
+          marginTop: '0.85rem', padding: '0.75rem 1rem',
+          background: 'rgba(124,58,237,0.04)', border: '1px solid rgba(124,58,237,0.15)',
+          borderRadius: '10px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
+            <ZoomIn size={14} color="var(--primary)" />
+            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--primary)', letterSpacing: '0.03em', textTransform: 'uppercase' }}>
+              Bias Explainability
+            </span>
+          </div>
+          <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+            {report.biasIndicators.map((indicator, idx) => (
+              <li key={idx}>{indicator}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };

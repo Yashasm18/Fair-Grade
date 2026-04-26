@@ -1,13 +1,19 @@
 """
-FairGrade AI — FastAPI Backend (v2.0)
-Google Cloud Technologies: Gemini 2.5 Flash (Vision), Gemini 2.0 Flash Lite, Firebase Firestore
+FairGrade AI — FastAPI Backend (v2.1)
+Google Cloud Technologies: Gemini 2.5 Pro (Vision + Grading), Firebase Firestore
 
 Agents:
-    1. OCRAgent        → Gemini Vision API text extraction
+    1. OCRAgent        → Gemini 2.5 Pro Vision API text extraction
     2. PrivacyAgent    → PII redaction
-    3. EvaluationAgent → Gemini AI grading with structured prompts
-    4. BiasAgent       → Algorithmic bias detection
+    3. EvaluationAgent → Gemini 2.5 Pro grading with weighted rubric scoring
+    4. BiasAgent       → Algorithmic bias detection with per-question explainability
     5. ReportingAgent  → JSON report assembly
+
+Security:
+    - /api/evaluate requires X-API-Key header matching FAIRGRADE_API_KEY env var
+    - CORS restricted to allow-listed origins
+    - Rate limiting via slowapi
+    - Request body capped at 30 MB (ASGI layer) + 10 MB per file
 """
 
 import os
@@ -15,12 +21,31 @@ import uuid
 import logging
 import asyncio
 from functools import partial
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
 from typing import Optional
 from dotenv import load_dotenv
+
+# ---------------------------------------------------------------------------
+# Sentry — Error Monitoring (P1: demo-day visibility)
+# ---------------------------------------------------------------------------
+SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+if SENTRY_DSN:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.fastapi import FastApiIntegration
+        from sentry_sdk.integrations.starlette import StarletteIntegration
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            integrations=[StarletteIntegration(), FastApiIntegration()],
+            traces_sample_rate=0.2,       # 20% of requests traced
+            environment=os.getenv("ENVIRONMENT", "development"),
+            release="fairgrade-ai@2.1.0",
+        )
+    except ImportError:
+        pass  # sentry-sdk not installed — safe to skip
 
 # ---------------------------------------------------------------------------
 # Rate Limiting (slowapi)
@@ -95,8 +120,8 @@ allowed_origins = PRODUCTION_ORIGINS if ENVIRONMENT == "production" else DEVELOP
 # ---------------------------------------------------------------------------
 app = FastAPI(
     title="FairGrade AI Backend",
-    version="2.0.0",
-    description="Multi-agent pipeline powered by Google Gemini AI for UN SDG 4.",
+    version="2.1.0",
+    description="Multi-agent pipeline powered by Google Gemini 2.5 Pro for UN SDG 4.",
 )
 
 # Register rate limiter
@@ -141,11 +166,29 @@ def health_check(request: Request):
         "status": "FairGrade AI backend is running",
         "gemini_ready": gemini_client is not None,
         "google_tech": {
-            "ai_model": "Google Gemini 2.5 Flash / 2.0 Flash Lite",
+            "ai_model": "Google Gemini 2.5 Pro (primary) / 2.5 Flash / 2.0 Flash (fallback)",
             "sdk": "google-genai",
             "database": "Firebase Firestore",
         },
     }
+
+
+# ---------------------------------------------------------------------------
+# API Key Authentication
+# ---------------------------------------------------------------------------
+# Set FAIRGRADE_API_KEY in the environment (backend .env or cloud secret).
+# The frontend sends this as the X-API-Key request header.
+# If the env var is unset the check is skipped (backward-compat for local dev).
+_FAIRGRADE_API_KEY = os.getenv("FAIRGRADE_API_KEY", "")
+
+
+def _verify_api_key(x_api_key: Optional[str]) -> None:
+    """Raise 401 if API key auth is configured and the header doesn't match."""
+    if _FAIRGRADE_API_KEY and x_api_key != _FAIRGRADE_API_KEY:
+        raise HTTPException(
+            status_code=401,
+            detail="Missing or invalid X-API-Key. Set the FAIRGRADE_API_KEY environment variable on the backend and pass it as an X-API-Key header from the client.",
+        )
 
 
 @app.post("/api/evaluate", tags=["Pipeline"])
@@ -155,14 +198,23 @@ async def evaluate_answer(
     file: UploadFile = File(...),
     teacher_score: float = Form(...),
     question_context: str = Form(None),
+    question_weight: float = Form(1.0),
+    x_api_key: Optional[str] = Header(default=None),
 ):
     """
     Full 5-agent pipeline with granular per-agent error handling.
     Returns partial results even if an individual agent fails.
 
+    Authentication: Requires X-API-Key header matching FAIRGRADE_API_KEY env var.
+    question_weight: optional form field (default 1.0) — multiplies the raw AI
+        score to support weighted rubrics. Clamped to 0.1–5.0.
+
     Blocking Gemini SDK calls are dispatched to a thread-pool executor so
     they do not stall the asyncio event loop under concurrent load.
     """
+    # ── Authentication (P0 security) ───────────────────────────────────
+    _verify_api_key(x_api_key)
+
     request_id = str(uuid.uuid4())[:8]
     log = logger.getChild(request_id)
     log.info("evaluate_answer — file=%s teacher_score=%s", file.filename, teacher_score)
@@ -214,13 +266,23 @@ async def evaluate_answer(
     # Run in executor — blocking Gemini call
     try:
         evaluation = await loop.run_in_executor(
-            None, partial(evaluation_agent.evaluate, clean_text, question_context)
+            None, partial(evaluation_agent.evaluate, clean_text, question_context, question_weight)
         )
-        log.info("Evaluation complete — score=%s confidence=%s", evaluation.get("score"), evaluation.get("confidence"))
+        log.info(
+            "Evaluation complete — score=%s weighted=%s confidence=%s",
+            evaluation.get("score"), evaluation.get("weighted_score"), evaluation.get("confidence")
+        )
     except Exception as exc:
         log.error("Evaluation Agent failed: %s", exc)
         pipeline_errors.append({"agent": "Evaluation Agent", "error": str(exc)})
-        evaluation = {"score": 0, "explanation": f"Evaluation failed: {str(exc)[:200]}", "confidence": 0.0}
+        evaluation = {
+            "score": 0,
+            "weighted_score": 0.0,
+            "question_weight": question_weight,
+            "explanation": f"Evaluation failed: {str(exc)[:200]}",
+            "confidence": 0.0,
+            "bias_indicators": [],
+        }
 
     # Agent 4: Bias Detection — pure math, no I/O
     try:
@@ -260,6 +322,10 @@ async def evaluate_answer(
         report["pipelineWarnings"] = pipeline_errors
     report["verified"] = False
     report["requestId"] = request_id
+    # Surface bias_indicators and weighted scoring at top level for the frontend
+    report["biasIndicators"] = evaluation.get("bias_indicators", [])
+    report["weightedScore"] = evaluation.get("weighted_score", evaluation.get("score", 0))
+    report["questionWeight"] = evaluation.get("question_weight", 1.0)
 
     log.info("Pipeline complete — warnings=%d", len(pipeline_errors))
     return report

@@ -7,9 +7,12 @@
 
 export interface EvaluationResult {
   aiScore: number;
+  weightedScore?: number;      // aiScore × question_weight, capped at 10
+  questionWeight?: number;     // the weight multiplier applied
   teacherScore: number;
   explanation: string;
   confidenceScore?: number;
+  biasIndicators?: string[];   // per-question explainability strings from AI
 }
 
 export interface BiasResult {
@@ -33,6 +36,10 @@ export interface EvaluationReport {
   bias: BiasResult;
   verified: boolean;
   pipelineWarnings?: PipelineWarning[];
+  // Top-level fields mirrored from evaluation for easy frontend access
+  biasIndicators?: string[];
+  weightedScore?: number;
+  questionWeight?: number;
 }
 
 export interface FileResult {
@@ -86,6 +93,8 @@ export interface EvaluationSetupProps {
   setTeacherScore: (score: string) => void;
   questionContext: string;
   setQuestionContext: (context: string) => void;
+  questionWeight: number;
+  setQuestionWeight: (weight: number) => void;
   files: File[];
   studentIds: Record<string, string>;
   handleStudentIdChange: (fileName: string, value: string) => void;
