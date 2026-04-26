@@ -89,10 +89,11 @@ function App() {
   }, [isDark]);
 
   // ─── Backend connection state (pre-warm indicator) ───
+  // Initialized as 'connecting' — no need to call setBackendStatus() inside
+  // the effect body (that triggers a cascading render and the lint rule).
   const [backendStatus, setBackendStatus] = useState<'connecting' | 'online' | 'offline'>('connecting');
 
   useEffect(() => {
-    setBackendStatus('connecting');
     fetch(`${API_URL}/`)
       .then(r => { if (r.ok) setBackendStatus('online'); else setBackendStatus('offline'); })
       .catch(() => setBackendStatus('offline'));
