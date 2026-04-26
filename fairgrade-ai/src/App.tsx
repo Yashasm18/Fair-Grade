@@ -13,7 +13,12 @@ import type { FileResult, VerifyPayload } from './types';
 
 // ─── Configurable API URL ───
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-// Prompt template is handled server-side in app.py
+
+// ─── App-level constants (replace magic numbers scattered inline) ───
+const RATE_LIMIT_DELAY_MS = 3000;   // ms to wait between batch files (Gemini 429 guard)
+const MAX_TEACHER_SCORE    = 10;    // maximum score on the 0–10 scale
+const FILENAME_TRUNCATE_LEN = 28;   // max chars before truncation with ellipsis
+
 // ─── Demo Mode Sample Data ───
 const DEMO_RESULTS: FileResult[] = [
   {
@@ -91,21 +96,25 @@ function App() {
   // ─── Authentication State ───
   const [user, setUser] = useState<User | null>(null);
   const [isGuest, setIsGuest] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      setIsAuthLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
   const handleLogin = async (): Promise<void> => {
     const provider = new GoogleAuthProvider();
+    setIsAuthLoading(true);
     try {
       await signInWithPopup(auth, provider);
     } catch (error) {
       console.error("Login failed:", error);
       setGlobalError("Google Login failed. Please try again.");
+      setIsAuthLoading(false);
     }
   };
 
@@ -164,7 +173,7 @@ function App() {
     });
   };
 
-  const truncateName = (name: string, max: number = 28): string => {
+  const truncateName = (name: string, max: number = FILENAME_TRUNCATE_LEN): string => {
     if (!name || name.length <= max) return name || '';
     const ext = name.substring(name.lastIndexOf('.'));
     return name.substring(0, max - ext.length - 3) + '...' + ext;
@@ -227,8 +236,8 @@ function App() {
       setGlobalError("Please upload at least one answer sheet.");
       return;
     }
-    if (teacherScore === '' || Number(teacherScore) < 0 || Number(teacherScore) > 10) {
-      setGlobalError("Please provide a valid teacher score between 0 and 10.");
+    if (teacherScore === '' || Number(teacherScore) < 0 || Number(teacherScore) > MAX_TEACHER_SCORE) {
+      setGlobalError(`Please provide a valid teacher score between 0 and ${MAX_TEACHER_SCORE}.`);
       return;
     }
 
@@ -243,9 +252,9 @@ function App() {
         setCurrentFileIndex(i);
         setCurrentStep(0);
 
-        // Rate-limit guard: wait 3s between files to avoid Gemini 429 errors
+        // Rate-limit guard: wait between files to avoid Gemini 429 errors
         if (i > 0) {
-          await new Promise(resolve => setTimeout(resolve, 3000));
+          await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_DELAY_MS));
         }
 
         const file = files[i];
@@ -361,22 +370,40 @@ function App() {
       if (response.ok) {
         const result = await response.json();
         console.log('Verification saved:', result);
-        // Save verification to Firestore
-        try {
-          if (import.meta.env.VITE_FIREBASE_API_KEY) {
-            await addDoc(collection(db, 'verifications'), {
-              fileName,
-              teacher_uid: user?.uid || 'anonymous',
-              action: verifyData.action,
-              finalScore: verifyData.finalScore,
-              originalAiScore: verifyData.originalAiScore,
-              originalTeacherScore: verifyData.originalTeacherScore,
-              overrideReason: verifyData.overrideReason || null,
-              timestamp: new Date(),
-            });
-          }
-        } catch (fsErr) {
-          console.error('Failed to save verification to Firestore:', fsErr);
+
+        // ── Update local results state so the UI reflects verified=true immediately ──
+        setResults(prev =>
+          prev.map(r =>
+            r.fileName === fileName && r.data
+              ? {
+                  ...r,
+                  data: {
+                    ...r.data,
+                    verified: true,
+                    evaluation: {
+                      ...r.data.evaluation,
+                      // Reflect the final score chosen by the teacher
+                      teacherScore: verifyData.finalScore,
+                    },
+                  },
+                }
+              : r
+          )
+        );
+
+        // Save verification to Firestore (fire-and-forget is acceptable here;
+        // the UI has already updated optimistically above)
+        if (import.meta.env.VITE_FIREBASE_API_KEY) {
+          addDoc(collection(db, 'verifications'), {
+            fileName,
+            teacher_uid: user?.uid || 'anonymous',
+            action: verifyData.action,
+            finalScore: verifyData.finalScore,
+            originalAiScore: verifyData.originalAiScore,
+            originalTeacherScore: verifyData.originalTeacherScore,
+            overrideReason: verifyData.overrideReason || null,
+            timestamp: new Date(),
+          }).catch(fsErr => console.error('Failed to save verification to Firestore:', fsErr));
         }
       }
     } catch (err) {
@@ -454,10 +481,16 @@ function App() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <button 
               onClick={handleLogin}
+              disabled={isAuthLoading}
               className="btn-primary" 
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', width: '100%' }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', padding: '1rem', width: '100%', opacity: isAuthLoading ? 0.7 : 1, cursor: isAuthLoading ? 'not-allowed' : 'pointer' }}
             >
-              <LogIn size={20} /> Sign in with Google
+              {isAuthLoading ? (
+                <span style={{ display: 'inline-block', width: 20, height: 20, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+              ) : (
+                <LogIn size={20} />
+              )}
+              {isAuthLoading ? 'Signing in…' : 'Sign in with Google'}
             </button>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '0.5rem 0' }}>

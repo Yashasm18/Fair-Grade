@@ -11,12 +11,15 @@ Agents:
 """
 
 import os
+import uuid
+import logging
+import asyncio
+from functools import partial
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 from dotenv import load_dotenv
-import gc
 
 # ---------------------------------------------------------------------------
 # Rate Limiting (slowapi)
@@ -30,6 +33,16 @@ limiter = Limiter(key_func=get_remote_address)
 load_dotenv()
 
 # ---------------------------------------------------------------------------
+# Structured logging
+# ---------------------------------------------------------------------------
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s  %(levelname)-8s  [%(name)s]  %(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%S",
+)
+logger = logging.getLogger("fairgrade")
+
+# ---------------------------------------------------------------------------
 # Gemini client — Google Gemini AI SDK (google-genai)
 # ---------------------------------------------------------------------------
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -39,14 +52,17 @@ if GEMINI_API_KEY:
     try:
         from google import genai
         gemini_client = genai.Client(api_key=GEMINI_API_KEY)
-        print("[OK] Google Gemini AI client initialized (google-genai SDK).")
+        logger.info("Google Gemini AI client initialized (google-genai SDK).")
     except Exception as exc:
-        print(f"[WARN] Gemini init failed: {exc}")
+        logger.warning("Gemini init failed: %s", exc)
 else:
-    print("[WARN] GEMINI_API_KEY not set — AI features will use mock responses.")
+    logger.warning("GEMINI_API_KEY not set — AI features will use mock responses.")
 
 # ---------------------------------------------------------------------------
 # Agent instances
+# NOTE: These are module-level singletons. Agents are stateless after init,
+# so sharing them across requests is safe for this project. In a high-traffic
+# production service you would use per-request instances or a connection pool.
 # ---------------------------------------------------------------------------
 from agents import OCRAgent, PrivacyAgent, EvaluationAgent, BiasAgent, ReportingAgent
 
@@ -137,7 +153,15 @@ async def evaluate_answer(
     """
     Full 5-agent pipeline with granular per-agent error handling.
     Returns partial results even if an individual agent fails.
+
+    Blocking Gemini SDK calls are dispatched to a thread-pool executor so
+    they do not stall the asyncio event loop under concurrent load.
     """
+    request_id = str(uuid.uuid4())[:8]
+    log = logger.getChild(request_id)
+    log.info("evaluate_answer — file=%s teacher_score=%s", file.filename, teacher_score)
+
+    loop = asyncio.get_event_loop()
     pipeline_errors = []
     extracted_text = ""
     clean_text = ""
@@ -161,27 +185,38 @@ async def evaluate_answer(
         raise HTTPException(status_code=413, detail=f"File too large ({len(file_bytes) / 1024 / 1024:.1f} MB). Maximum allowed: 10 MB.")
 
     # Agent 1: OCR (Google Gemini Vision API)
+    # Run in executor — Gemini SDK is synchronous and would block the event loop
     try:
-        extracted_text = ocr_agent.extract_text(file_bytes, file.filename)
+        extracted_text = await loop.run_in_executor(
+            None, partial(ocr_agent.extract_text, file_bytes, file.filename)
+        )
+        log.info("OCR complete — chars=%d", len(extracted_text))
     except Exception as exc:
+        log.error("OCR Agent failed: %s", exc)
         pipeline_errors.append({"agent": "OCR Agent", "error": str(exc)})
         extracted_text = "[OCR FAILED] Unable to extract text."
 
-    # Agent 2: Privacy (Regex PII redaction)
+    # Agent 2: Privacy (Regex PII redaction) — fast, runs inline
     try:
         clean_text = privacy_agent.anonymize(extracted_text)
     except Exception as exc:
+        log.error("Privacy Agent failed: %s", exc)
         pipeline_errors.append({"agent": "Privacy Agent", "error": str(exc)})
         clean_text = extracted_text
 
     # Agent 3: Evaluation (Google Gemini AI)
+    # Run in executor — blocking Gemini call
     try:
-        evaluation = evaluation_agent.evaluate(clean_text, question_context)
+        evaluation = await loop.run_in_executor(
+            None, partial(evaluation_agent.evaluate, clean_text, question_context)
+        )
+        log.info("Evaluation complete — score=%s confidence=%s", evaluation.get("score"), evaluation.get("confidence"))
     except Exception as exc:
+        log.error("Evaluation Agent failed: %s", exc)
         pipeline_errors.append({"agent": "Evaluation Agent", "error": str(exc)})
         evaluation = {"score": 0, "explanation": f"Evaluation failed: {str(exc)[:200]}", "confidence": 0.0}
 
-    # Agent 4: Bias Detection
+    # Agent 4: Bias Detection — pure math, no I/O
     try:
         bias_info = bias_agent.detect_bias(
             teacher_score,
@@ -189,7 +224,9 @@ async def evaluate_answer(
             ai_confidence=evaluation.get("confidence", 1.0),
             answer_length=len(clean_text),
         )
+        log.info("Bias detection complete — severity=%s status=%s", bias_info.get("severity"), bias_info.get("status"))
     except Exception as exc:
+        log.error("Bias Agent failed: %s", exc)
         pipeline_errors.append({"agent": "Bias Agent", "error": str(exc)})
 
     # Agent 5: Reporting
@@ -198,6 +235,7 @@ async def evaluate_answer(
             extracted_text, clean_text, evaluation, bias_info, teacher_score
         )
     except Exception as exc:
+        log.error("Reporting Agent failed: %s", exc)
         pipeline_errors.append({"agent": "Reporting Agent", "error": str(exc)})
         report = {
             "originalTextLength": len(extracted_text),
@@ -215,13 +253,9 @@ async def evaluate_answer(
     if pipeline_errors:
         report["pipelineWarnings"] = pipeline_errors
     report["verified"] = False
+    report["requestId"] = request_id
 
-    # ── Memory Cleanup ─────────────────────────────────────────────────
-    del file_bytes
-    del extracted_text
-    del clean_text
-    gc.collect()
-
+    log.info("Pipeline complete — warnings=%d", len(pipeline_errors))
     return report
 
 
@@ -237,6 +271,10 @@ async def verify_evaluation(request: Request, override: TeacherOverride):
             raise HTTPException(status_code=400, detail="Action must be 'accept_ai' or 'override'.")
 
         verified_bias = bias_agent.detect_bias(override.originalTeacherScore, override.finalScore)
+        logger.info(
+            "verify_evaluation — file=%s action=%s finalScore=%s",
+            override.fileName, override.action, override.finalScore,
+        )
         return {
             "fileName": override.fileName,
             "originalAiScore": override.originalAiScore,
@@ -255,6 +293,7 @@ async def verify_evaluation(request: Request, override: TeacherOverride):
     except HTTPException:
         raise
     except Exception as exc:
+        logger.error("verify_evaluation failed: %s", exc)
         raise HTTPException(status_code=500, detail=f"Verification failed: {exc}")
 
 
@@ -262,24 +301,33 @@ async def verify_evaluation(request: Request, override: TeacherOverride):
 @limiter.limit("30/minute")
 async def analyze(request: Request, file: UploadFile = File(...)):
     """Lightweight endpoint: OCR + quick Gemini analysis only (no bias detection)."""
+    loop = asyncio.get_event_loop()
     try:
         content = await file.read()
-        extracted_text = ocr_agent.extract_text(content, file.filename)
+        extracted_text = await loop.run_in_executor(
+            None, partial(ocr_agent.extract_text, content, file.filename)
+        )
 
         if not gemini_client:
             return {"text": extracted_text, "analysis": "Gemini API key not configured."}
 
         from google import genai
-        response = gemini_client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=f"Evaluate this student answer and suggest a mark out of 10:\n{extracted_text}",
+        response = await loop.run_in_executor(
+            None,
+            partial(
+                gemini_client.models.generate_content,
+                model="gemini-2.0-flash",
+                contents=f"Evaluate this student answer and suggest a mark out of 10:\n{extracted_text}",
+            ),
         )
         return {"text": extracted_text, "analysis": response.text}
 
     except Exception as exc:
+        logger.error("analyze failed: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc))
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
+    # reload=False for production safety; use reload=True only during local development
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=False)

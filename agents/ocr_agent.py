@@ -25,7 +25,6 @@ FALLBACK_MODELS = [
     "gemini-2.5-flash",
     "gemini-2.0-flash",
     "gemini-2.0-flash-lite",
-    "gemini-2.5-flash-lite",
 ]
 
 EXTRACT_PROMPT = (
@@ -82,9 +81,6 @@ class OCRAgent:
             print("[OCR] PyMuPDF not installed — cannot convert PDF to image.")
         except Exception as exc:
             print(f"[OCR] PDF conversion failed: {exc}")
-        
-        import gc
-        gc.collect()
         return file_bytes
 
     def _run_gemini_ocr(self, file_bytes: bytes) -> Optional[str]:

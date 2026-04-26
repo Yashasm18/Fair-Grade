@@ -44,7 +44,6 @@ class ReportingAgent:
                 "status": bias_info["status"],
                 "gap": bias_info["difference"],
                 "biasScorePercentage": bias_info.get("bias_score_percentage", 0.0),
-                "confidenceWeight": bias_info.get("confidence_weight", 1.0),
                 "completenessFactor": bias_info.get("completeness_factor", 1.0),
                 "formulaUsed": bias_info.get("formula_used", "")
             },

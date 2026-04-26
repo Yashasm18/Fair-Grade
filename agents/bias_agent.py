@@ -36,7 +36,9 @@ class BiasAgent:
         Args:
             teacher_mark: Score assigned by the human teacher (0–10).
             ai_mark: Score assigned by the AI evaluation agent (0–10).
-            ai_confidence: AI's self-reported confidence (0.0–1.0). Stored but not used in scoring.
+            ai_confidence: AI's self-reported confidence (0.0–1.0). Intentionally NOT used in
+                scoring to keep the bias metric deterministic and auditable. Accepted in the
+                signature for API transparency and potential future use.
             answer_length: Character count of the student's answer text.
 
         Returns:
