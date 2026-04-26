@@ -2,7 +2,7 @@
 Evaluation Agent — Grades anonymized student answers using Google Gemini AI.
 
 Google Cloud Technology: Google Gemini API (google-genai SDK)
-Models: gemini-2.5-flash, gemini-2.0-flash, gemini-2.0-flash-lite, gemini-2.5-flash-lite
+Models: gemini-2.5-flash, gemini-2.0-flash, gemini-2.0-flash-lite
 Evaluates factual correctness against the teacher's rubric/context.
 Implements multi-model fallback with exponential backoff to handle
 free-tier quota limits gracefully.
@@ -16,8 +16,7 @@ from typing import Optional, Union
 FALLBACK_MODELS = [
     "gemini-2.5-flash",
     "gemini-2.0-flash",
-    "gemini-2.0-flash-lite",
-    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash-lite",  # gemini-2.5-flash-lite removed: unverified model name
 ]
 
 _BASE_RETRY_DELAY = 5  # seconds
