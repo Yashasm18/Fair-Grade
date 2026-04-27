@@ -1,0 +1,33 @@
+name: Keep Backend Alive
+
+on:
+  schedule:
+    # Ping every 10 minutes — Render free-tier sleeps after 15 min of inactivity
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # allow manual trigger
+
+jobs:
+  ping:
+    name: Ping Render Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wake up backend
+        # Render free-tier cold starts can take up to ~50 s.
+        # --max-time 70 gives ample headroom; || true ensures this
+        # keep-alive ping never marks the workflow as failed.
+        run: |
+          echo "Pinging https://fairgrade-backend.onrender.com/ ..."
+          for attempt in 1 2 3; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 70 \
+              https://fairgrade-backend.onrender.com/ || echo "000")
+            echo "Attempt $attempt — HTTP $STATUS"
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Backend is online"
+              exit 0
+            fi
+            echo "⏳ Not yet ready, waiting 5 s before retry..."
+            sleep 5
+          done
+          echo "⚠️ Backend did not return 200 after 3 attempts — may still be waking up"
+        # Never fail the workflow — this is a fire-and-forget keep-alive
+        continue-on-error: true

@@ -3,10 +3,14 @@
 FairGrade AI ensures fair evaluation by removing identity bias and using AI to detect grading inconsistencies — all while keeping data secure and private.
 
 ## New Features
+- **Explainable AI**: Returns an explicit Confidence Score and transparent custom Bias Percentage formulas.
+- **Google OAuth 2.0**: Secure Educator Portal powered by Firebase Auth to protect sensitive dashboards.
+- **Immutable Audit Trails**: Every teacher evaluation override is cryptographically tied to their verified User ID.
+- **Impact Analytics**: Tracks real-world measurable impact with "Overall Bias Reduction" metrics and a visual Scatter Plot mapping of discrepancies.
 - **Question Context**: Teachers can now paste the question and model answer to guide the AI for more accurate grading.
 - **Batch Processing**: Supports uploading multiple answer sheets at once. The system will process them sequentially.
 - **PDF Support**: Upload PDF documents; the application will automatically extract the first page for OCR.
-- **Analytics Dashboard**: Tracks the aggregated average scores, bias distribution (Overgraded, Undergraded, Fair) over time, and history of recent evaluations.
+- **Cold Start Optimizations**: Intelligent frontend pre-warming background requests to keep Render backend responsive.
 - **Firestore Integration**: Persistently stores evaluation data mapped by timestamp and scores.
 
 ## Architecture
@@ -57,7 +61,7 @@ The frontend connects to the local backend `http://localhost:8000`.
    ```bash
    npm install
    ```
-3. Provide your Firebase Configuration in `.env` (maps to `src/config/firebase.js`).
+3. Provide your Firebase Configuration in `.env` (maps to `src/config/firebase.ts`).
 4. Start the Vite React development server:
    ```bash
    npm run dev
