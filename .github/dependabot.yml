@@ -5,19 +5,31 @@ updates:
     directory: "/fairgrade-ai"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 10
     commit-message:
       prefix: "chore(deps)"
+    groups:
+      npm-deps:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
       
   # Maintain dependencies for pip (FastAPI backend)
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 10
+    versioning-strategy: "increase-if-necessary"
     commit-message:
       prefix: "chore(deps)"
+    groups:
+      pip-deps:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
       
   # Maintain GitHub Actions workflows
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 10
