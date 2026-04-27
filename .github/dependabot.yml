@@ -1,0 +1,23 @@
+version: 2
+updates:
+  # Maintain dependencies for npm (React frontend)
+  - package-ecosystem: "npm"
+    directory: "/fairgrade-ai"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"
+      
+  # Maintain dependencies for pip (FastAPI backend)
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"
+      
+  # Maintain GitHub Actions workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
