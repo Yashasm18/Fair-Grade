@@ -218,15 +218,15 @@ const ResultCard: React.FC<ResultCardProps> = ({ result, studentId, onRetry, onV
             <span>Teacher Verification <em>(Responsible AI)</em></span>
           </div>
           <div className="hitl-buttons">
-            <button className="hitl-accept" onClick={handleAcceptAi} id={`accept-${fileName}`}>
-              <CheckCircle size={14} /> Accept AI Score
+            <button className="hitl-accept" onClick={handleAcceptAi} id={`accept-${fileName}`} aria-label={`Accept AI Score for ${fileName}`}>
+              <CheckCircle size={14} aria-hidden="true" /> Accept AI Score
             </button>
-            <button className="hitl-override" onClick={() => setShowOverride(!showOverride)} id={`override-${fileName}`}>
-              <Edit3 size={14} /> Override Score
+            <button className="hitl-override" onClick={() => setShowOverride(!showOverride)} id={`override-${fileName}`} aria-expanded={showOverride} aria-controls={`override-form-${fileName}`} aria-label={`Override AI Score for ${fileName}`}>
+              <Edit3 size={14} aria-hidden="true" /> Override Score
             </button>
           </div>
           {showOverride && (
-            <div className="hitl-override-form">
+            <div className="hitl-override-form" id={`override-form-${fileName}`} role="region" aria-label={`Override Score Form for ${fileName}`}>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                 <input
                   type="number" min="0" max="10" step="0.5"
@@ -236,7 +236,7 @@ const ResultCard: React.FC<ResultCardProps> = ({ result, studentId, onRetry, onV
                   className="hitl-score-input"
                   id={`override-score-${fileName}`}
                 />
-                <button className="hitl-submit" onClick={handleOverrideSubmit} disabled={!overrideScore}>
+                <button className="hitl-submit" onClick={handleOverrideSubmit} disabled={!overrideScore} aria-label="Confirm score override">
                   Confirm
                 </button>
               </div>

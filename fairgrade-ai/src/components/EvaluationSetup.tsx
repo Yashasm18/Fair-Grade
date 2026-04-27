@@ -135,14 +135,16 @@ const EvaluationSetup: React.FC<EvaluationSetupProps> = ({
             onClick={() => setShowPresets(!showPresets)}
             title="Question Bank"
             type="button"
+            aria-expanded={showPresets}
+            aria-controls="preset-panel"
           >
-            <BookOpen size={14} />
+            <BookOpen size={14} aria-hidden="true" />
             Presets {presets.length > 0 && `(${presets.length})`}
           </button>
         </label>
 
         {showPresets && (
-          <div className="preset-panel">
+          <div className="preset-panel" id="preset-panel" role="region" aria-label="Question Presets">
             {presets.length === 0 ? (
               <p className="preset-empty">No saved presets yet. Type a question below and save it.</p>
             ) : (
@@ -216,8 +218,8 @@ const EvaluationSetup: React.FC<EvaluationSetupProps> = ({
         aria-label="Upload answer sheets. Drag and drop or click to browse."
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') document.getElementById("file-upload")?.click(); }}
       >
-        <Upload size={28} />
-        <p>{files.length > 0 ? `${files.length} file(s) selected` : "Drag & drop images/PDFs or click to browse"}</p>
+        <Upload size={28} aria-hidden="true" />
+        <p aria-live="polite">{files.length > 0 ? `${files.length} file(s) selected` : "Drag & drop images/PDFs or click to browse"}</p>
 
         {files.length > 0 && (
           <div style={{ marginTop: '1rem', textAlign: 'left', width: '100%' }} onClick={e => e.stopPropagation()}>
