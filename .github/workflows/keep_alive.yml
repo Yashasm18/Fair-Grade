@@ -2,14 +2,24 @@ name: Keep Backend Alive
 
 on:
   schedule:
-    # Ping every 10 minutes — Render free-tier sleeps after 15 min of inactivity
-    - cron: '*/10 * * * *'
+    # Ping every 14 minutes — just under Render's 15-min inactivity sleep window.
+    # Previous */10 cadence burned through free-tier Actions minutes too quickly.
+    - cron: '*/14 * * * *'
   workflow_dispatch: # allow manual trigger
+
+# Cancel any in-progress or queued runs of this workflow when a new one starts.
+# Prevents stale pings from piling up and wasting Actions minutes.
+concurrency:
+  group: keep-alive
+  cancel-in-progress: true
+
+permissions: {}          # least-privilege — this job needs no repo access
 
 jobs:
   ping:
     name: Ping Render Backend
     runs-on: ubuntu-latest
+    timeout-minutes: 5    # fail fast if runner is slow or unavailable
     steps:
       - name: Wake up backend
         # Render free-tier cold starts can take up to ~50 s.
