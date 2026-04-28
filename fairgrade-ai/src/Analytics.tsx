@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, getCountFromServer } from 'firebase/firestore';
 import { db } from './config/firebase';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
@@ -58,11 +58,18 @@ const Analytics: React.FC = () => {
         return;
       }
       try {
-        const q = query(collection(db, "evaluations"), orderBy("timestamp", "desc"), limit(50));
+        const evalsCollection = collection(db, "evaluations");
+        
+        // Fetch the true total count of evaluations from the server
+        const countSnapshot = await getCountFromServer(evalsCollection);
+        const trueTotalCount = countSnapshot.data().count;
+
+        // Fetch the latest 50 for the charts/trends
+        const q = query(evalsCollection, orderBy("timestamp", "desc"), limit(50));
         const snapshot = await getDocs(q);
         const evals: FirestoreEvaluation[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreEvaluation));
 
-        setEvaluations(evals.slice(0, 10)); // keep last 10 for display
+        setEvaluations(evals.slice(0, 10)); // keep last 10 for display table
 
         if (evals.length > 0) {
           let totalAi = 0;
@@ -85,7 +92,7 @@ const Analytics: React.FC = () => {
           setStats({
             avgAi: (totalAi / evals.length).toFixed(1),
             avgTeacher: (totalTeacher / evals.length).toFixed(1),
-            totalEvals: evals.length,
+            totalEvals: trueTotalCount,
             avgBiasScore: (totalBias / evals.length).toFixed(2),
             highRiskCount: highRisk,
             biasCounts: counts as AnalyticsStats['biasCounts']
