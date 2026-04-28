@@ -24,7 +24,7 @@
   &nbsp;·&nbsp;
   <a href="#-getting-started-local-development">Local Setup</a>
   &nbsp;·&nbsp;
-  <a href="#-team-vektor">Team</a>
+  <a href="#team">Team</a>
 </p>
 
 > **🧑‍⚖️ Note for Judges:** Click **"Try the Demo (Guest Mode)"** on the login screen to explore the full UI instantly — no authentication needed. *(First load may take ~30s as the free-tier backend wakes up.)*
@@ -436,6 +436,7 @@ Fair-Grade/
 
 ---
 
+<a id="team"></a>
 ## 👥 Team VEKTOR ⚡
 
 <p align="center">
