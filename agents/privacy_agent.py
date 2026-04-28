@@ -27,6 +27,12 @@ _IDENTITY_PATTERNS = [
     # "Batch: CS-2024"
     r'(?i)(Batch\s*[:\-]?\s*)([^\n,]{1,30})(?=[\n,]|$)',
 
+    # Aggressive fallback patterns to guarantee redaction even without trailing newlines
+    r'(?i)(Student\s*ID[\s:]*)([A-Z0-9\-]+)',
+    r'(?i)(ID[\s:]*)(\d{3,})',
+    r'(?i)(Roll\s*(?:no|number)?[\s:]*)([A-Z0-9\-]+)',
+    r'(?i)(Name\s*:\s*)([A-Za-z\s]+)',
+
     # Inline natural language — Proper-cased name required (reduces false positives)
     r'(?i)(my\s+name\s+is\s+)([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})',
     r'(?i)(this\s+(?:test|paper|exam)\s+belongs\s+to\s+)([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})',
