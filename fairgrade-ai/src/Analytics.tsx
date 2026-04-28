@@ -124,11 +124,11 @@ const Analytics: React.FC = () => {
         } else {
           // DEMO MODE: Fill with impressive mock data so judges never see an empty state
           setEvaluations([
-            { id: '1', ai_score: 8.5, teacher_score: 9.0, bias_status: 'Fair', bias_level: 'Low Risk', timestamp: { seconds: Date.now()/1000 - 86400 } as any, text: '', structured_feedback: '', confidence: 95 },
-            { id: '2', ai_score: 7.0, teacher_score: 5.0, bias_status: 'Overgraded', bias_level: 'High Risk', timestamp: { seconds: Date.now()/1000 - 86400*2 } as any, text: '', structured_feedback: '', confidence: 92 },
-            { id: '3', ai_score: 9.0, teacher_score: 7.0, bias_status: 'Undergraded', bias_level: 'High Risk', timestamp: { seconds: Date.now()/1000 - 86400*3 } as any, text: '', structured_feedback: '', confidence: 88 },
-            { id: '4', ai_score: 6.5, teacher_score: 6.5, bias_status: 'Fair', bias_level: 'Low Risk', timestamp: { seconds: Date.now()/1000 - 86400*4 } as any, text: '', structured_feedback: '', confidence: 90 },
-            { id: '5', ai_score: 8.0, teacher_score: 8.5, bias_status: 'Fair', bias_level: 'Low Risk', timestamp: { seconds: Date.now()/1000 - 86400*5 } as any, text: '', structured_feedback: '', confidence: 91 },
+            { id: '1', ai_score: 8.5, teacher_score: 9.0, bias_status: 'Fair', bias_level: 'Low Risk', timestamp: { seconds: Date.now()/1000 - 86400 } as any, anonymized_text: '', explanation: '' },
+            { id: '2', ai_score: 7.0, teacher_score: 5.0, bias_status: 'Overgraded', bias_level: 'High Risk', timestamp: { seconds: Date.now()/1000 - 86400*2 } as any, anonymized_text: '', explanation: '' },
+            { id: '3', ai_score: 9.0, teacher_score: 7.0, bias_status: 'Undergraded', bias_level: 'High Risk', timestamp: { seconds: Date.now()/1000 - 86400*3 } as any, anonymized_text: '', explanation: '' },
+            { id: '4', ai_score: 6.5, teacher_score: 6.5, bias_status: 'Fair', bias_level: 'Low Risk', timestamp: { seconds: Date.now()/1000 - 86400*4 } as any, anonymized_text: '', explanation: '' },
+            { id: '5', ai_score: 8.0, teacher_score: 8.5, bias_status: 'Fair', bias_level: 'Low Risk', timestamp: { seconds: Date.now()/1000 - 86400*5 } as any, anonymized_text: '', explanation: '' },
           ]);
           setStats({
             avgAi: 7.8,
