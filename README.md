@@ -102,14 +102,14 @@ To move beyond local pilots and achieve systemic impact, FairGrade AI employs a 
 FairGrade v3.0 replaces the naive `|teacher − AI| × 10` formula with a **Composite Inconsistency Index** that combines four independent signals:
 
 $$
-\text{Composite} = \min(100,\; |T - A| \times 10 \times \text{SWG} \times \text{CF} \times \text{OCR}_{\text{confidence}})
+\text{Composite} = \min(100, |T - A| \times 10 \times \text{SWG} \times \text{CF} \times \text{OCR}_{\text{confidence}})
 $$
 
 | Signal | Formula | Purpose |
 |--------|---------|--------|
 | **Severity-Weighted Gap (SWG)** | $1.0 + 0.4 \times \left(\frac{T+A}{20}\right)^2$ | Weights upper-band disagreements higher (1.0–1.4×). High-achievers are disproportionately harmed by conservative grading norms. |
-| **Completeness Factor (CF)** | $\min\!\left(1.0,\; \frac{\log(1+\text{words})}{\log(120)}\right)$ | Discounts bias flags on very short answers where both raters lack sufficient signal. |
-| **OCR Confidence Factor** | $\max(0.5,\; c_{\text{ocr}})$ | Confidence comes from **Gemini's own JSON output** (`{"text":..., "confidence": 87}`), not keyword heuristics. Below 90% → score penalised. Below 75% → flagged for **manual review**. |
+| **Completeness Factor (CF)** | $\min\left(1.0, \frac{\log(1+\text{words})}{\log(120)}\right)$ | Discounts bias flags on very short answers where both raters lack sufficient signal. |
+| **OCR Confidence Factor** | $\max(0.5, c_{\text{ocr}})$ | Confidence comes from **Gemini's own JSON output** (`{"text":..., "confidence": 87}`), not keyword heuristics. Below 90% → score penalised. Below 75% → flagged for **manual review**. |
 | **Directional Consistency Signal** | Session history + Firestore cross-session history → ≥75% consistent direction | Fetches the teacher's **last 10 real evaluations from Firestore** so DCS works from paper 1 of any session, not just after paper 3+ in a single batch. |
 
 **Significance Guard:** High Risk requires composite ≥ 30% **AND** absolute gap ≥ 1.5 marks. This prevents false positives on tiny disagreements that technically exceed the threshold.
