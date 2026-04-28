@@ -102,7 +102,7 @@ To move beyond local pilots and achieve systemic impact, FairGrade AI employs a 
 FairGrade v3.0 replaces the naive `|teacher − AI| × 10` formula with a **Composite Inconsistency Index** that combines four independent signals:
 
 $$
-\text{Composite} = \min(100,\; |T - A| \times 10 \times \text{SWG} \times \text{CF} \times \text{OCR\_confidence})
+\text{Composite} = \min(100,\; |T - A| \times 10 \times \text{SWG} \times \text{CF} \times \text{OCR}_{\text{confidence}})
 $$
 
 | Signal | Formula | Purpose |
