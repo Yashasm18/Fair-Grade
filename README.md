@@ -139,7 +139,7 @@ If the Composite Score > 30% **and** gap ≥ 1.5 marks, the system flags it as *
 | 👩‍🏫 **Immutable Audit Trails (HITL)** | Every teacher override is cryptographically tied to their Google UID, ensuring accountability |
 | 🔐 **API Key Authentication** | `/api/evaluate` is protected by an `X-API-Key` header — no open endpoint in production |
 | 📡 **Error Monitoring** | Sentry integration for real-time error visibility during demos and production |
-| ♿ **Accessibility (a11y)** | Phase 2 implementation of WCAG compliance, including ARIA-labels, keyboard navigation, and chart alt-text for inclusive educator access |
+| ♿ **Accessibility (a11y)** | WCAG compliant core UI featuring dynamic ARIA-labels, `aria-live` screen-reader announcements, and `role="region"` navigation for inclusive educator access |
 
 ---
 
