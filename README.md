@@ -18,7 +18,7 @@
 </p>
 
 <p align="center">
-  🎬 <a href="https://youtu.be/YOUR_VIDEO_ID"><b>Watch the Demo Video</b></a>
+  🎬 <a href="https://youtu.be/sFtfY3iwZjA"><b>Watch the Demo Video</b></a>
   &nbsp;·&nbsp;
   👉 <a href="https://team-vektor-fairgrade.vercel.app/"><b>Try the Live Demo</b></a>
   &nbsp;·&nbsp;
@@ -28,7 +28,7 @@
 </p>
 
 > **🧑‍⚖️ Note for Judges:** Click **"Try the Demo (Guest Mode)"** on the login screen to explore the full UI instantly — no authentication needed. *(First load may take ~30s as the free-tier backend wakes up.)*
-> The **[2-minute demo video](https://youtu.be/YOUR_VIDEO_ID)** shows: messy handwriting → OCR → anonymization → AI grade → bias report → teacher verification → analytics dashboard.
+> The **[2-minute demo video](https://youtu.be/sFtfY3iwZjA)** shows: messy handwriting → OCR → anonymization → AI grade → bias report → teacher verification → analytics dashboard.
 
 ---
 
