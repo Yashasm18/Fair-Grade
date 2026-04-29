@@ -552,6 +552,8 @@ This section documents the security posture of the current deployment so evaluat
 | **Error Monitoring** | ✅ Sentry | Real-time error visibility via `sentry-sdk[fastapi]`. Activated by setting `SENTRY_DSN` env var. |
 | **Audit Logging** | ✅ Firestore + request IDs | Every evaluation and teacher verification is logged with the teacher's Firebase UID. Backend assigns a `requestId` UUID to each pipeline run for log correlation. `bias_indicators` are stored per evaluation. |
 
+> ⚠️ **Demo‑only note:** The `VITE_FAIRGRADE_API_KEY` is intentionally exposed on the frontend to keep the prototype simple.  
+> For production, move this key to a secure backend service and never bundle secrets in client‑side code.
 ---
 
 ## 📄 License
