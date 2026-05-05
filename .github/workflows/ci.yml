@@ -153,7 +153,7 @@ jobs:
           VITE_BACKEND_URL: https://placeholder.onrender.com
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report
