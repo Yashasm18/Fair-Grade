@@ -2,9 +2,11 @@ name: Keep Backend Alive
 
 on:
   schedule:
-    # Ping every 14 minutes — just under Render's 15-min inactivity sleep window.
-    # Previous */10 cadence burned through free-tier Actions minutes too quickly.
-    - cron: '*/14 * * * *'
+    # Ping every 10 minutes during likely-active hours (approx 8 AM – 11 PM IST).
+    # IST is UTC+5:30, so 8 AM IST ≈ 02:30 UTC and 11 PM IST ≈ 17:30 UTC.
+    # We cover hours 2-17 UTC to stay within that window.
+    # This saves ~60 % of Actions minutes vs the old 24/7 */14 cadence.
+    - cron: '*/10 2-17 * * *'
   workflow_dispatch: # allow manual trigger
 
 # Cancel any in-progress or queued runs of this workflow when a new one starts.
@@ -19,24 +21,24 @@ jobs:
   ping:
     name: Ping Render Backend
     runs-on: ubuntu-latest
-    timeout-minutes: 5    # fail fast if runner is slow or unavailable
+    timeout-minutes: 3    # fail fast if runner is slow or unavailable
     steps:
       - name: Wake up backend
         # Render free-tier cold starts can take up to ~50 s.
-        # --max-time 70 gives ample headroom; || true ensures this
-        # keep-alive ping never marks the workflow as failed.
+        # --max-time 60 gives ample headroom; continue-on-error ensures
+        # this keep-alive ping never marks the workflow as failed.
         run: |
           echo "Pinging https://fairgrade-backend.onrender.com/ ..."
           for attempt in 1 2 3; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 70 \
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 \
               https://fairgrade-backend.onrender.com/ || echo "000")
             echo "Attempt $attempt — HTTP $STATUS"
             if [ "$STATUS" = "200" ]; then
               echo "✅ Backend is online"
               exit 0
             fi
-            echo "⏳ Not yet ready, waiting 5 s before retry..."
-            sleep 5
+            echo "⏳ Not yet ready, waiting 10 s before retry..."
+            sleep 10
           done
           echo "⚠️ Backend did not return 200 after 3 attempts — may still be waking up"
         # Never fail the workflow — this is a fire-and-forget keep-alive
