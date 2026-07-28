@@ -1,6 +1,6 @@
 <div align="center"><img src="fairgrade.gif" width="220" alt="FairGrade AI"/></div>
 
-# 🏆 FairGrade AI — Bias Detection in Student Grading
+# FairGrade AI — Bias Detection in Student Grading
 
 ![FairGrade AI](./fairgrade-ai/src/assets/hero_widescreen_diagram_v3_1.png)
 
@@ -32,7 +32,7 @@
 
 ---
 
-## 📌 The Problem
+## The Problem
 
 ### The Research
 Academic literature consistently shows that **implicit bias** in student grading is real, measurable, and widespread:
@@ -68,7 +68,7 @@ This project directly addresses **[UN SDG 4: Quality Education](https://sdgs.un.
 
 ---
 
-## 📈 Measured Impact
+## Measured Impact
 
 > _"What gets measured, gets improved."_
 
