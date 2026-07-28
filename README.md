@@ -32,7 +32,7 @@
 
 ---
 
-## 📌 The Problem
+## The Problem
 
 ### The Research
 Academic literature consistently shows that **implicit bias** in student grading is real, measurable, and widespread:
@@ -56,7 +56,7 @@ This is a stronger, more defensible position than claiming "the AI is always rig
 
 ---
 
-## 🎯 UN Sustainable Development Goal
+## UN Sustainable Development Goal
 
 This project directly addresses **[UN SDG 4: Quality Education](https://sdgs.un.org/goals/goal4)** — ensuring inclusive and equitable quality education for all.
 
