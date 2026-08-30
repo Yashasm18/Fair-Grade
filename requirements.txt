@@ -9,7 +9,7 @@ slowapi>=0.1.9
 gunicorn>=21.2.0
 
 PyMuPDF>=1.23.0
-google-genai>=0.3.0
+google-genai>=1.73.1
 Pillow>=10.0.0
 
 # Error monitoring
